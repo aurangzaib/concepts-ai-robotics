@@ -194,3 +194,79 @@ def trace_search(grid, init, goal, _action):
     return policy
 
 
+def dynamic_policy(_grid, _goal, _cost, _delta):
+    # initialize value with 99
+    _value = [[100 for row in range(len(_grid[0]))] for col in range(len(_grid))]
+    _policy = [[' ' for row in range(len(_grid[0]))] for col in range(len(_grid))]
+    _change = True
+    """
+    for x in rows
+        for y in cols
+            if x,y match with goals then mark value(x,y) as 0
+            for k in delta
+                x2 -> delta(k)(0) and y2 -> delta(k)(0)
+                check:
+                1- x2, y2 are within grid
+                2- grid(x2)(y2) is free i.e. grid(x2)(y2) is 0
+                    get value of x2,y2 and add cost to it
+                    i.e. v2 = value(x2)(y2) + cost
+                    at this point value(x2)(y2) gives new pose values and value(x)(y) gives original pose values
+                    -> see below diagram for delta loop <-
+                    compare v2 and v(x)(y)
+                    if v2 is smaller which initially would only be for goal location
+                        then original location value = new value
+                        i.e. value(x2)(y2) = v2
+                        so:
+                        |   |                                   |   |
+                      __________                             __________
+                        |   | 99             --->               |   | 1
+                      __________                             __________      
+                        |   | 0                                 |   | 0             
+    """
+    while _change is True:
+        _change = False
+        # loop over each position in the grid
+        # vertical loop
+        for _x in range(len(_grid)):
+            # horizontal loop
+            for _y in range(len(_grid[0])):
+                # use debugger at this point to see how its proceeding
+                """
+                if we have reached on the goal position and value is larger. then assign it 0.
+                goal in dynamic programming is 0
+                """
+                if _x is _goal[0] and _y is _goal[1]:
+                    if _value[_x][_y] > 0:
+                        _value[_x][_y] = 0
+                        _policy[_x][_y] = '*'
+                        _change = True
+                elif _grid[_x][_y] is 0:
+                    """
+                              (x2, y2) 0
+                                  |      
+                    3 (x2,y2) -- x,y -- (x2,y2) 2            
+                                  | 
+                              (x2, y2) 1
+                    
+                    go through each of the position. check its not out of grid and grid position is not blocked
+                    """
+                    for _index in range(len(_delta)):
+                        _x2 = _x + _delta[_index][0]
+                        _y2 = _y + _delta[_index][1]
+                        if 0 <= _x2 < len(grid) and 0 <= _y2 < len(grid[0]):
+                            if _grid[_x2][_y2] is FREE:
+                                _v2 = _value[_x2][_y2] + _cost
+                                """
+                                    |   |                   |   |
+                                  __________             __________
+                                    |   | 99     --->       |   | 1
+                                  __________             __________      
+                                    | 99  | 0               | 1 | 0
+                                """
+                                if _v2 < _value[_x][_y]:
+                                    _value[_x][_y] = _v2
+                                    _policy[_x][_y] = delta_name[_index]
+                                    _change = True
+
+    return [_value, _policy]
+
