@@ -320,3 +320,23 @@ notice in the output that:
     - when pid is used with twiddle, it yields the best results and the oscillation is very low
 """
 
+if PLOT_CONTROLLERS is True:
+    plot_pid_controllers(x_p, y_p,  # p controller
+                         x_pd, y_pd,  # pd controller
+                         x_pd_drift, y_pd_drift,  # pd controller with drift
+                         x_pid, y_pid,  # pid controller
+                         x_pid_twiddle, y_pid_twiddle,
+                         x_pid_race_track, y_pid_race_track)  # pid controller with twiddle
+
+if PLOT_SMOOTHING is True:
+    plot_smoothing(path,
+                   path_smooth,
+                   path_straight,
+                   path_like_original)
+
+if PLOT_CYCLIC_SMOOTHING is True:
+    plot_cyclic_smoothing(path_cyclic,
+                          path_cyclic_smooth)
+
+if IS_PLOT_ENABLE is True:
+    plt.show()
