@@ -55,6 +55,33 @@ class KalmanFilter(object):
         predictions for the future position
         """
 
+    @staticmethod
+    def multi_variant__one_dimension_kalman_filter(estimate_matrix,  # x
+                                                   uncertainty_covariance,  # P
+                                                   motion_vector,  # u
+                                                   state_transition_matrix,  # F
+                                                   measurement_function,  # H
+                                                   measurement_noise,  # R
+                                                   identity_matrix,  # I
+                                                   measurements  # z
+                                                   ):
+        for index in range(len(measurements)):
+            # prediction step
+            estimate_matrix = (state_transition_matrix * estimate_matrix) + motion_vector
+            uncertainty_covariance = (
+                                     state_transition_matrix * uncertainty_covariance) * state_transition_matrix.transpose()
+
+            # measurement step
+            z_t = np.matrix([measurements[index]])
+            measurement = z_t.transpose() - (measurement_function * estimate_matrix)
+            system_error = measurement_function * uncertainty_covariance * measurement_function.transpose() + measurement_noise
+            kalman_gain = uncertainty_covariance * measurement_function.transpose() * system_error.getI()
+            estimate_matrix = estimate_matrix + (kalman_gain * measurement)
+            uncertainty_covariance = (identity_matrix - (kalman_gain * measurement_function)) * uncertainty_covariance
+
+        print "estimation (x): \n", estimate_matrix
+        print "prediction (P): \n", uncertainty_covariance
+
 
 x = np.matrix('0.;0.')  # estimate matrix
 P = np.matrix('1000. 0.;0. 1000.')  # uncertainty covariance
