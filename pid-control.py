@@ -149,3 +149,36 @@ def pid_controller(_robot, _radius, _params, n=100, _speed=1.0):
     return _x_trajectory, _y_trajectory, _error / n
 
 
+def pid_controller_race_track(_robot, _radius, _params, n=100, _speed=1.0):
+    _tau_p = _params[0]
+    _tau_d = _params[1]
+    _tau_i = _params[2]
+
+    _x_trajectory = []
+    _y_trajectory = []
+
+    _error = 0
+    _cte_old = _robot.cte(_radius)
+    _cte_sum = 0
+
+    for _index in range(n * 2):
+        _cte = _robot.cte(_radius)
+        # push current coordinates
+        _x_trajectory.append(_robot.x)
+        _y_trajectory.append(_robot.y)
+        # accumulating all the error
+        _cte_sum += _cte
+        # steering for pid
+        _proportional = -_tau_p * _cte
+        _differential = -_tau_d * (_cte - _cte_old)
+        _integral = -_tau_i * _cte_sum
+        _steering = _proportional + _differential + _integral
+        # save old value of the cte i.e. y before moving the robot
+        _cte_old = _cte
+        # move the robot with the steering and speed (how much distance)
+        _robot.move(_steering, _speed)
+        if _index >= n:
+            _error += _cte ** 2
+    return _x_trajectory, _y_trajectory, _error / n
+
+
