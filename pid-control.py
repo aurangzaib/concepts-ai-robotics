@@ -84,3 +84,68 @@ def smooth_constrained_cyclic(_path, weight_data=0.07, weight_smooth=0.1, tolera
     return _new_path
 
 
+def p_controller(_robot, tau_p, n=20, speed=1.0):
+    _x_trajectory = []
+    _y_trajectory = []
+    for _index in range(n):
+        # push current coordinates
+        _x_trajectory.append(_robot.x)
+        _y_trajectory.append(_robot.y)
+        # steering for proportional
+        steering = -tau_p * _robot.y
+        _robot.move(steering, speed)
+    return _x_trajectory, _y_trajectory
+
+
+def pd_controller(_robot, tau_p, tau_d, n=20, speed=1.0):
+    _x_trajectory = []
+    _y_trajectory = []
+    cte_old = _robot.y
+    for _index in range(n):
+        # push current coordinates
+        _x_trajectory.append(_robot.x)
+        _y_trajectory.append(_robot.y)
+        # steering for proportional and differential
+        _proportional = -tau_p * _robot.y
+        _differential = -tau_d * (_robot.y - cte_old)
+        # combined steering
+        steering = _proportional + _differential
+        # move the robot
+        cte_old = _robot.y
+        _robot.move(steering, speed)
+    return _x_trajectory, _y_trajectory
+
+
+def pid_controller(_robot, _radius, _params, n=100, _speed=1.0):
+    _tau_p = _params[0]
+    _tau_d = _params[1]
+    _tau_i = _params[2]
+
+    _x_trajectory = []
+    _y_trajectory = []
+
+    _error = 0
+    _cte_old = _robot.y
+    _cte_sum = 0
+
+    for _index in range(n * 2):
+        _cte = _robot.y
+        # push current coordinates
+        _x_trajectory.append(_robot.x)
+        _y_trajectory.append(_robot.y)
+        # accumulating all the error
+        _cte_sum += _cte
+        # steering for pid
+        _proportional = -_tau_p * _cte
+        _differential = -_tau_d * (_cte - _cte_old)
+        _integral = -_tau_i * _cte_sum
+        _steering = _proportional + _differential + _integral
+        # save old value of the cte i.e. y before moving the robot
+        _cte_old = _cte
+        # move the robot with the steering and speed (how much distance)
+        _robot.move(_steering, _speed)
+        if _index >= n:
+            _error += _cte ** 2
+    return _x_trajectory, _y_trajectory, _error / n
+
+
