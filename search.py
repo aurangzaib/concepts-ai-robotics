@@ -270,3 +270,111 @@ def dynamic_policy(_grid, _goal, _cost, _delta):
 
     return [_value, _policy]
 
+
+def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_prob):
+    # initialize value with 1000
+    _value = [[1000 for row in range(len(_grid[0]))] for col in range(len(_grid))]
+    _policy = [[' ' for row in range(len(_grid[0]))] for col in range(len(_grid))]
+    """
+    failure probability
+    divided in 2 parts because there can be 2 possible non-original moves 
+    """
+    _failure_prob = (1.0 - _success_prob) / 2.0
+    _change = True
+    while _change is True:
+        _change = False
+        for _x in range(len(_grid)):
+            for _y in range(len(_grid[0])):
+                if _x is _goal[0] and _y is _goal[1]:
+                    if _value[_x][_y] > 0:
+                        _value[_x][_y] = 0
+                        _policy[_x][_y] = '*'
+                        _change = True
+                elif _grid[_x][_y] is FREE:
+                    for _index in range(len(_delta)):
+                        _v2 = _cost
+                        """
+                        for every move using delta,
+                        there could be 3 possible movements because now movement is not exact
+                        it is stochastic and possible outcome of each action is not with 1.0 probability
+                        """
+                        for _stochastic_index in range(-1, 2):
+                            """
+                            __index is one of the stochastic index
+                            for every __index get the location
+                            and assign it the value based on where it is
+                            so if stochastic index is 0 then its success probability else its failure
+                            """
+                            __index = (_index + _stochastic_index) % len(_delta)
+                            _x2 = _x + _delta[__index][0]
+                            _y2 = _y + _delta[__index][1]
+                            if _stochastic_index is 0:
+                                _p = _success_prob
+                            else:
+                                _p = _failure_prob
+
+                            _x_boundary = 0 <= (_x2) < len(_grid)
+                            _y_boundary = 0 <= (_y2) < len(grid[0])
+                            _grid_free = _grid[_x2][_y2] is FREE
+                            """
+                            if it is within boundaries then no penalty 
+                            if its hitting the wall i.e. going outside the boundary
+                            then apply penalty
+                            """
+                            if _x_boundary and _y_boundary and _grid_free:
+                                _v2 += (_value[_x2][_y2] * _p)
+                            else:
+                                _v2 += (_collision_cost * _p)
+                        """
+                        update the value of the current position
+                        """
+                        if _v2 < _value[_x][_y]:
+                            _value[_x][_y] = _v2
+                            _policy[_x][_y] = delta_name[_index]
+                            _change = True
+    return [_value, _policy]
+
+
+[g, x, y, action, expand] = search(grid,
+                                   init,
+                                   goal,
+                                   cost)
+
+[a_f, a_g, a_x, a_y, a_action, a_expand] = heuristic_search(grid,
+                                                            heuristic,
+                                                            init,
+                                                            goal,
+                                                            cost)
+
+[dynamic_value, dynamic_policy] = dynamic_policy(grid_dynamic,
+                                                 goal_dynamic,
+                                                 cost,
+                                                 delta)
+
+[stochastic_value, stochastic_policy] = stochastic_policy(grid_dynamic,
+                                                          goal_dynamic,
+                                                          cost,
+                                                          delta,
+                                                          collision_cost,
+                                                          success_prob)
+
+print "\nsearch value : "
+for _v in expand: print _v
+
+print "\nheuristic value : "
+for _e in a_expand: print _e
+
+print "\nsearch policy: "
+trace_search(grid, init, goal, action)
+
+print "\ndynamic value: "
+for _v in dynamic_value: print _v
+
+print "\ndynamic policy: "
+for _v in dynamic_policy: print _v
+
+print "\nstochastic value: "
+for _v in stochastic_value: print _v
+
+print "\nstochastic policy: "
+for _v in stochastic_policy: print _v
