@@ -28,64 +28,64 @@ collision_cost = 1000
 success_prob = 0.5
 FREE = 0
 
-
-def search(grid, init, goal, cost):
+# Breadth First Planning
+def search(_grid, _delta, _init, _goal, _cost):
     # initialize closed with zeros having same dimensions as grid
-    closed = [[0 for row in range(len(grid[0]))] for col in range(len(grid))]
-    expand = [[-1 for row in range(len(grid[0]))] for col in range(len(grid))]
-    action = [[-1 for row in range(len(grid[0]))] for col in range(len(grid))]
-    init[0] = 0
-    init[1] = 0
-    x = init[0]
-    y = init[1]
+    _closed = [[0 for row in range(len(_grid[0]))] for col in range(len(_grid))]
+    _expand = [[-1 for row in range(len(_grid[0]))] for col in range(len(_grid))]
+    _action = [[-1 for row in range(len(_grid[0]))] for col in range(len(_grid))]
+    _init[0] = 0
+    _init[1] = 0
+    x = _init[0]
+    y = _init[1]
     g = 0
-    closed[init[0]][init[1]] = 1
+    _closed[_init[0]][_init[1]] = 1
     # note that g is 0th element. because its the criteria for sorting
-    open = [[g, x, y]]
+    _open = [[g, x, y]]
     count = 0
     resign = False
     found = False
     while resign is False and found is False:
-        if len(open) is 0:
+        if len(_open) is 0:
             resign = True
         else:
-            open.sort()
-            open.reverse()
-            _next = open.pop()  # remove the element with lowest g value
+            _open.sort()
+            _open.reverse()
+            _next = _open.pop()  # remove the element with lowest g value
             g = _next[0]
             x = _next[1]
             y = _next[2]
-            expand[x][y] = count
+            _expand[x][y] = count
             count += 1
-            if goal[0] is x and goal[1] is y:
+            if _goal[0] is x and _goal[1] is y:
                 found = True
             else:
-                for index in range(len(delta)):
+                for index in range(len(_delta)):
                     # move forward to the next location
-                    x2 = x + delta[index][0]
-                    y2 = y + delta[index][1]
-                    _boundary_condition = 0 <= x2 < len(grid) and 0 <= y2 < len(grid[0])
-                    _grid_is_free = closed[x2][y2] is FREE and grid[x2][y2] is FREE
+                    x2 = x + _delta[index][0]
+                    y2 = y + _delta[index][1]
+                    _boundary_condition = 0 <= x2 < len(_grid) and 0 <= y2 < len(_grid[0])
+                    _grid_is_free = _closed[x2][y2] is FREE and _grid[x2][y2] is FREE
                     if _boundary_condition:
                         if _grid_is_free:
-                            g2 = g + cost
-                            open.append([g2, x2, y2])
-                            closed[x2][y2] = 1
+                            g2 = g + _cost
+                            _open.append([g2, x2, y2])
+                            _closed[x2][y2] = 1
                             """
                             saving which action from delta is performed used when tracing the policy
                             (x2,y2) are used instead of (x,y)
                             (x, y) are values of all possible tried combinations
                             (x2, y2) are values of the combination we used in the end
                             """
-                            action[x2][y2] = index
+                            _action[x2][y2] = index
     if resign is True:
         print 'Fail'
     elif found is True:
-        return [g, x, y, action, expand]
+        return [g, x, y, action, _expand]
     else:
         return 'Unknown Error'
 
-
+# A* Planning
 def heuristic_search(grid, heuristic, init, goal, cost):
     # initialize with same dimensions as grid
     closed = [[0 for row in range(len(grid[0]))] for col in range(len(grid))]
@@ -194,7 +194,7 @@ def trace_search(grid, init, goal, _action):
         print policy[_index]
     return policy
 
-
+# Optimal Policy on each Node or Location
 def dynamic_policy(_grid, _goal, _cost, _delta):
     # initialize value with 99
     _value = [[100 for row in range(len(_grid[0]))] for col in range(len(_grid))]
@@ -271,7 +271,7 @@ def dynamic_policy(_grid, _goal, _cost, _delta):
 
     return [_value, _policy]
 
-
+# Taking in account the probability of Robot movement and Wall Hitting Penalty
 def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_prob):
     # initialize value with 1000
     _value = [[1000 for row in range(len(_grid[0]))] for col in range(len(_grid))]
@@ -337,6 +337,7 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
 
 
 [g, x, y, action, expand] = search(grid,
+                                   delta,
                                    init,
                                    goal,
                                    cost)
