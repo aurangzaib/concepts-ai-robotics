@@ -28,6 +28,7 @@ collision_cost = 1000
 success_prob = 0.5
 FREE = 0
 
+
 def search(grid, init, goal, cost):
     # initialize closed with zeros having same dimensions as grid
     closed = [[0 for row in range(len(grid[0]))] for col in range(len(grid))]
@@ -261,7 +262,7 @@ def dynamic_policy(_grid, _goal, _cost, _delta):
                                   __________             __________
                                     |   | 99     --->       |   | 1
                                   __________             __________      
-                                    | 99  | 0               | 1 | 0
+                                    | 99| 0                 | 1 | 0
                                 """
                                 if _v2 < _value[_x][_y]:
                                     _value[_x][_y] = _v2
@@ -313,8 +314,8 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
                             else:
                                 _p = _failure_prob
 
-                            _x_boundary = 0 <= (_x2) < len(_grid)
-                            _y_boundary = 0 <= (_y2) < len(grid[0])
+                            _x_boundary = 0 <= _x2 < len(_grid)
+                            _y_boundary = 0 <= _y2 < len(grid[0])
                             _grid_free = _grid[_x2][_y2] is FREE
                             """
                             if it is within boundaries then no penalty 
@@ -322,9 +323,9 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
                             then apply penalty
                             """
                             if _x_boundary and _y_boundary and _grid_free:
-                                _v2 += (_value[_x2][_y2] * _p)
+                                _v2 += _value[_x2][_y2] * _p
                             else:
-                                _v2 += (_collision_cost * _p)
+                                _v2 += _collision_cost * _p
                         """
                         update the value of the current position
                         """

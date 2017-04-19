@@ -84,8 +84,10 @@ class Robot(object):
     def cte(self, radius):
         """
         this is the method which is used to provide the cross track error for a race track.
-        previously we were using y as a cte but in real world we have to use other paramters 
+        previously we were using y as a cte but in real world we have to use other parameters 
         for the cte instead of only y. here we now use radius as a parameter
+        
+        a rectangle shaped race track is under consideration when applying logic below
         """
 
         # case - 1:

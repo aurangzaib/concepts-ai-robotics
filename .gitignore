@@ -91,3 +91,6 @@ ENV/
 .idea/modules.xml
 .idea/robotics-ai.iml
 .idea/workspace.xml
+scratch.py
+.idea
+.vscode

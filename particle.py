@@ -27,7 +27,7 @@ def re_sample_wheel(iteration=1):
     p = []
     p3 = []
     for i in range(iteration):
-        for i in range(number_of_samples):
+        for _i in range(number_of_samples):
             # create array for probability
             p.append(random.uniform(0, 500))
             # create array for probability importance weights
@@ -36,7 +36,7 @@ def re_sample_wheel(iteration=1):
         sample_index = random.randint(0, number_of_samples)
         beta = 0
 
-        for i in range(number_of_samples):
+        for _i in range(number_of_samples):
             beta += random.random() * 2 * max(w)
             while w[sample_index] < beta:
                 beta -= w[sample_index]

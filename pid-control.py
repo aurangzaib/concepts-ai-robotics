@@ -44,7 +44,11 @@ def smooth_gradient_descent(_path, weight_data=0.0, weight_smooth=0.1, tolerance
     return _new_path
 
 
-def smooth_constrained_cyclic(_path, weight_data=0.07, weight_smooth=0.1, tolerance=0.000001):
+def smooth_constrained_cyclic(_path,
+                              weight_data=0.07,
+                              weight_smooth=0.1,
+                              tolerance=0.000001):
+
     weight_constrained_smooth = 0.5 * weight_smooth
     _new_path = deepcopy(_path)
     _change = tolerance
@@ -63,19 +67,19 @@ def smooth_constrained_cyclic(_path, weight_data=0.07, weight_smooth=0.1, tolera
                     _old_value = _new_path[_i][_j]
 
                     # gradient and descent equations
-                    _gradient = weight_data * (_path[_i][_j] - _new_path[_i][_j])
-                    _descent = weight_smooth * (
-                        _new_path[(_i + 1) % len(_path)][_j] + _new_path[(_i - 1) % len(_path)][_j] - (
-                            2. * _new_path[_i][_j]))
+                    _gradient = _path[_i][_j] - _new_path[_i][_j]
+                    _descent = _new_path[(_i + 1) % len(_path)][_j] + _new_path[(_i - 1) % len(_path)][_j]
+                    _descent -= 2. * _new_path[_i][_j]
 
                     # constrained smoothing equations
-                    constrained_smooth_backward = 2. * (_new_path[(_i - 1) % len(_path)][_j]) - \
-                                                  _new_path[(_i - 2) % len(_path)][_j] - _new_path[_i][_j]
-                    constrained_smooth_forward = 2. * (_new_path[(_i + 1) % len(_path)][_j]) - \
-                                                 _new_path[(_i + 2) % len(_path)][_j] - _new_path[_i][_j]
+                    constrained_smooth_backward = 2. * (_new_path[(_i - 1) % len(_path)][_j])
+                    constrained_smooth_backward -= _new_path[(_i - 2) % len(_path)][_j] - _new_path[_i][_j]
+
+                    constrained_smooth_forward = 2. * (_new_path[(_i + 1) % len(_path)][_j])
+                    constrained_smooth_forward -= _new_path[(_i + 2) % len(_path)][_j] - _new_path[_i][_j]
 
                     # save results of the equations
-                    _new_path[_i][_j] += _gradient + _descent
+                    _new_path[_i][_j] += weight_data * _gradient + weight_smooth * _descent
                     _new_path[_i][_j] += weight_constrained_smooth * constrained_smooth_backward
                     _new_path[_i][_j] += weight_constrained_smooth * constrained_smooth_forward
 
@@ -87,6 +91,7 @@ def smooth_constrained_cyclic(_path, weight_data=0.07, weight_smooth=0.1, tolera
 def p_controller(_robot, tau_p, n=20, speed=1.0):
     _x_trajectory = []
     _y_trajectory = []
+
     for _index in range(n):
         # push current coordinates
         _x_trajectory.append(_robot.x)
@@ -212,7 +217,7 @@ def twiddle(_controller=pid_controller, _radius=0., _tolerance=0.2):
                 """
                 otherwise we will try other direction
                 (- _dp[_index]) will move to original position
-                (- 2*_dp[_index]) will move to oppositive direction
+                (- 2*_dp[_index]) will move to opposite direction
                 """
                 _p[_index] -= 2 * _dp[_index]
                 _robot = make_robot()
@@ -304,7 +309,7 @@ radius = 25.
 orientation = np.pi / 2
 robot.set(0.0, radius, orientation)
 params_race_track = twiddle(pid_controller_race_track, radius)
-# [10.0, 11.0, 0] --> can also be used instead of twiddle opitimzed params
+# [10.0, 11.0, 0] --> can also be used instead of twiddle optimized params
 x_pid_race_track, y_pid_race_track, err_race_track = pid_controller_race_track(robot,
                                                                                radius,
                                                                                params_race_track,
