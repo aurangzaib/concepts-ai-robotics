@@ -1,5 +1,5 @@
 import numpy as np
-from robot import Robot
+from class_robot import Robot
 import matplotlib.pyplot as plt
 
 SHOULD_PRINT = False

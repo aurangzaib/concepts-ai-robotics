@@ -73,18 +73,21 @@ def smooth_constrained_cyclic(_path,
 
                     # constrained smoothing equations
                     constrained_smooth_backward = 2. * (_new_path[(_i - 1) % len(_path)][_j])
-                    constrained_smooth_backward -= _new_path[(_i - 2) % len(_path)][_j] - _new_path[_i][_j]
+                    constrained_smooth_backward -= _new_path[(_i - 2) % len(_path)][_j]
+                    constrained_smooth_backward -= _new_path[_i][_j]
 
                     constrained_smooth_forward = 2. * (_new_path[(_i + 1) % len(_path)][_j])
-                    constrained_smooth_forward -= _new_path[(_i + 2) % len(_path)][_j] - _new_path[_i][_j]
+                    constrained_smooth_forward -= _new_path[(_i + 2) % len(_path)][_j]
+                    constrained_smooth_forward -= _new_path[_i][_j]
 
                     # save results of the equations
                     _new_path[_i][_j] += weight_data * _gradient + weight_smooth * _descent
                     _new_path[_i][_j] += weight_constrained_smooth * constrained_smooth_backward
                     _new_path[_i][_j] += weight_constrained_smooth * constrained_smooth_forward
 
-                    # compare the outcomes of the gradient and descent results
-                    _change += abs(_new_path[_i][_j] - _old_value)
+
+        # compare the outcomes of the gradient and descent results
+        _change += abs(_new_path[_i][_j] - _old_value)
     return _new_path
 
 
@@ -98,7 +101,7 @@ def p_controller(_robot, tau_p, n=20, speed=1.0):
         _y_trajectory.append(_robot.y)
         # steering for proportional
         steering = -tau_p * _robot.y
-        _robot.move(steering, speed)
+        _robot.move([], steering, speed)
     return _x_trajectory, _y_trajectory
 
 
@@ -117,7 +120,7 @@ def pd_controller(_robot, tau_p, tau_d, n=20, speed=1.0):
         steering = _proportional + _differential
         # move the robot
         cte_old = _robot.y
-        _robot.move(steering, speed)
+        _robot.move([], steering, speed)
     return _x_trajectory, _y_trajectory
 
 
@@ -148,7 +151,7 @@ def pid_controller(_robot, _radius, _params, n=100, _speed=1.0):
         # save old value of the cte i.e. y before moving the robot
         _cte_old = _cte
         # move the robot with the steering and speed (how much distance)
-        _robot.move(_steering, _speed)
+        _robot.move([], _steering, _speed)
         if _index >= n:
             _error += _cte ** 2
     return _x_trajectory, _y_trajectory, _error / n
@@ -181,7 +184,7 @@ def pid_controller_race_track(_robot, _radius, _params, n=100, _speed=1.0):
         # save old value of the cte i.e. y before moving the robot
         _cte_old = _cte
         # move the robot with the steering and speed (how much distance)
-        _robot.move(_steering, _speed)
+        _robot.move([], _steering, _speed)
         if _index >= n:
             _error += _cte ** 2
     return _x_trajectory, _y_trajectory, _error / n

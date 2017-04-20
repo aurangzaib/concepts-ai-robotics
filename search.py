@@ -164,7 +164,8 @@ def heuristic_search(grid, heuristic, init, goal, cost):
 
 
 def trace_search(grid, init, goal, _action):
-    policy = [[' ' for row in range(len(grid[0]))] for col in range(len(grid))]
+    policy = [[' ' for row in range(len(grid[0]))]
+              for col in range(len(grid))]
     # mark the goal coordinates as *
     __x = goal[0]
     __y = goal[1]
