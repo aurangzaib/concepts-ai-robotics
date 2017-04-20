@@ -14,7 +14,7 @@ def make_robot(_with_systematic_bias=True):
     Resets the robot back to the initial position and drift.
     You'll want to call this after you call `run`.
     """
-    _robot = Robot()
+    _robot = Robot(20.)
     _robot.set(0, 1., 0)
     if _with_systematic_bias is True:
         _robot.set_steering_drift(10 / 180 * np.pi)

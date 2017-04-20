@@ -101,7 +101,7 @@ def p_controller(_robot, tau_p, n=20, speed=1.0):
         _y_trajectory.append(_robot.y)
         # steering for proportional
         steering = -tau_p * _robot.y
-        _robot.move([], steering, speed)
+        _robot.move_simple(steering, speed)
     return _x_trajectory, _y_trajectory
 
 
@@ -120,7 +120,7 @@ def pd_controller(_robot, tau_p, tau_d, n=20, speed=1.0):
         steering = _proportional + _differential
         # move the robot
         cte_old = _robot.y
-        _robot.move([], steering, speed)
+        _robot.move_simple(steering, speed)
     return _x_trajectory, _y_trajectory
 
 
@@ -151,7 +151,7 @@ def pid_controller(_robot, _radius, _params, n=100, _speed=1.0):
         # save old value of the cte i.e. y before moving the robot
         _cte_old = _cte
         # move the robot with the steering and speed (how much distance)
-        _robot.move([], _steering, _speed)
+        _robot.move_simple(_steering, _speed)
         if _index >= n:
             _error += _cte ** 2
     return _x_trajectory, _y_trajectory, _error / n
@@ -184,7 +184,7 @@ def pid_controller_race_track(_robot, _radius, _params, n=100, _speed=1.0):
         # save old value of the cte i.e. y before moving the robot
         _cte_old = _cte
         # move the robot with the steering and speed (how much distance)
-        _robot.move([], _steering, _speed)
+        _robot.move_simple(_steering, _speed)
         if _index >= n:
             _error += _cte ** 2
     return _x_trajectory, _y_trajectory, _error / n
@@ -307,7 +307,7 @@ x_pid_twiddle, y_pid_twiddle, err_twiddle = pid_controller(robot,
                                                            params,
                                                            number_of_steps)
 
-robot = Robot()
+robot = Robot(20.)
 radius = 25.
 orientation = np.pi / 2
 robot.set(0.0, radius, orientation)
