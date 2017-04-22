@@ -100,13 +100,13 @@ def main(grid,
 #   1 = occupied space
 
 grid = [[0, 1, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0],
         [0, 1, 0, 1, 1, 0],
-        [0, 1, 0, 1, 0, 0],
-        [0, 0, 0, 1, 0, 1],
-        [0, 1, 0, 1, 0, 0]]
+        [0, 0, 0, 1, 0, 0],
+        [0, 1, 1, 0, 0, 0]]
 
 init = [0, 0]
-goal = [len(grid) - 1, len(grid[0]) - 1]
+goal = [4, 3]
 
 steering_noise = 0.1
 distance_noise = 0.03
@@ -132,11 +132,16 @@ for index in range(0, 10):
                                                    weight_smooth,
                                                    p_gain,
                                                    d_gain)
-    plots_data.append(path)
+    if collisions is 0:
+        plots_data.append(path)
+
+plt.xlim(-1, len(grid) + 1)
+plt.ylim(len(grid[0]) - 1, 0)
+
 for plot_data in plots_data:
     for data in plot_data:
         sample_index = random.randint(0, 1000)
-        p_path.scatter(data[0], data[1], c=[[sample_index / 1000.,
+        p_path.scatter(data[1], data[0], c=[[sample_index / 1000.,
                                              (1000 - sample_index) / 1000.,
                                              (1000 - sample_index) / 1000.]])
 plt.show()
