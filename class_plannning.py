@@ -48,10 +48,10 @@ class plan:
 
         # open list elements are of the type: [f, g, h, x, y]
 
-        closed = [[0 for row in range(len(self.grid[0]))]
-                  for col in range(len(self.grid))]
-        action = [[0 for row in range(len(self.grid[0]))]
-                  for col in range(len(self.grid))]
+        # initialize with same dimensions as grid
+        closed = [[0 for row in range(len(self.grid[0]))] for col in range(len(self.grid))]
+        expand = [[-1 for row in range(len(self.grid[0]))] for col in range(len(self.grid))]
+        action = [[0 for row in range(len(self.grid[0]))] for col in range(len(self.grid))]
 
         closed[self.init[0]][self.init[1]] = 1
 
@@ -60,7 +60,7 @@ class plan:
         h = self.heuristic[x][y]
         g = 0
         f = g + h
-
+        closed[self.init[0]][self.init[1]] = 1
         open = [[f, g, h, x, y]]
 
         found = False  # flag that is set when search complete
@@ -73,7 +73,6 @@ class plan:
             if len(open) == 0:
                 resign = True
                 print '###### Search terminated without success'
-
             else:
                 # remove node from list
                 open.sort()
@@ -83,6 +82,12 @@ class plan:
                 y = next[4]
                 g = next[1]
 
+                f = next[0]
+                g = next[1]
+                h = next[2]
+                x = next[3]
+                y = next[4]
+                expand[x][y] = count
             # check if we are done
 
             if x == goal[0] and y == goal[1]:
@@ -94,8 +99,7 @@ class plan:
                 for i in range(len(delta)):
                     x2 = x + delta[i][0]
                     y2 = y + delta[i][1]
-                    if x2 >= 0 and x2 < len(self.grid) and y2 >= 0 \
-                            and y2 < len(self.grid[0]):
+                    if 0 <= x2 < len(self.grid) and 0 <= y2 < len(self.grid[0]):
                         if closed[x2][y2] == 0 and self.grid[x2][y2] == 0:
                             g2 = g + self.cost
                             h2 = self.heuristic[x2][y2]

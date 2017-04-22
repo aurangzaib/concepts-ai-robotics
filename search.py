@@ -119,7 +119,7 @@ def heuristic_search(grid, heuristic, init, goal, cost):
     count = 0
     resign = False
     found = False
-    while resign is False and found is False:
+    while not resign and not found:
         if len(open) is 0:
             resign = True
         else:

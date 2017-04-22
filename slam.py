@@ -1,6 +1,8 @@
 from class_robot import Robot
 from class_particle import particles
 from class_plannning import plan
+import matplotlib.pyplot as plt
+import random
 
 
 # --------
@@ -9,11 +11,11 @@ from class_plannning import plan
 #
 
 def run(grid, goal, s_path, params, printflag=False, speed=0.1, timeout=1000):
-    myrobot = Robot()
-    myrobot.set(0., 0., 0.)
-    myrobot.set_noise(steering_noise, distance_noise, measurement_noise)
-    filter = particles(myrobot.x, myrobot.y, myrobot.orientation,
-                       steering_noise, distance_noise, measurement_noise)
+    plot_data = []
+    robot = Robot()
+    robot.set(0., 0., 0.)
+    robot.set_noise(steering_noise, distance_noise, measurement_noise)
+    particle_filter = particles(robot.x, robot.y, robot.orientation, steering_noise, distance_noise, measurement_noise)
 
     cte = 0.0
     err = 0.0
@@ -21,7 +23,7 @@ def run(grid, goal, s_path, params, printflag=False, speed=0.1, timeout=1000):
 
     index = 0  # index into the path
 
-    while not myrobot.check_goal(goal) and N < timeout:
+    while not robot.check_goal(goal) and N < timeout:
 
         diff_cte = - cte
 
@@ -29,7 +31,7 @@ def run(grid, goal, s_path, params, printflag=False, speed=0.1, timeout=1000):
         # compute the CTE
 
         # start with the present robot estimate
-        estimate = filter.get_position()
+        estimate = particle_filter.get_position()
         if index < len(s_path):
             start_point = s_path[index]
             end_point = s_path[index + 1]
@@ -40,35 +42,30 @@ def run(grid, goal, s_path, params, printflag=False, speed=0.1, timeout=1000):
             _u = (_R[0] * _delta[0] + _R[1] * _delta[1]) / (_delta[0] ** 2 + _delta[1] ** 2)
             cte = (_R[1] * _delta[0] - _R[0] * _delta[1]) / (_delta[0] ** 2 + _delta[1] ** 2)
 
-            if (_u > 1):
+            if _u > 1:
                 index += 1
-
-        ### ENTER CODE HERE
-
-
-        # ----------------------------------------
-
 
         diff_cte += cte
 
         steer = - params[0] * cte - params[1] * diff_cte
 
-        myrobot = myrobot.move(grid, steer, speed)
-        filter.move(grid, steer, speed)
+        robot = robot.move(grid, steer, speed)
+        particle_filter.move(grid, steer, speed)
 
-        Z = myrobot.sense()
-        filter.sense(Z)
+        Z = robot.sense()
+        particle_filter.sense(Z)
 
-        if not myrobot.check_collision(grid):
+        if not robot.check_collision(grid):
             print '##### Collision ####'
 
         err += (cte ** 2)
         N += 1
 
         if printflag:
-            print myrobot, cte, index, u
+            print robot, cte, index, u
 
-    return [myrobot.check_goal(goal), myrobot.num_collisions, myrobot.num_steps]
+        plot_data.append([robot.x, robot.y])
+    return [robot.check_goal(goal), robot.num_collisions, robot.num_steps, plot_data]
 
 
 # ------------------------------------------------
@@ -76,8 +73,16 @@ def run(grid, goal, s_path, params, printflag=False, speed=0.1, timeout=1000):
 # this is our main routine
 #
 
-def main(grid, init, goal, steering_noise, distance_noise, measurement_noise,
-         weight_data, weight_smooth, p_gain, d_gain):
+def main(grid,
+         init,
+         goal,
+         steering_noise,
+         distance_noise,
+         measurement_noise,
+         weight_data,
+         weight_smooth,
+         p_gain,
+         d_gain):
     path = plan(grid, init, goal)
     path.astar(goal)
     path.smooth(weight_data, weight_smooth)
@@ -112,8 +117,29 @@ weight_smooth = 0.2
 p_gain = 2.0
 d_gain = 6.0
 
-print main(grid, init, goal, steering_noise, distance_noise, measurement_noise,
-           weight_data, weight_smooth, p_gain, d_gain)
+plots_data = []
+p_fig, p_path = plt.subplots()
+p_path.set_title('path traces')
+
+for index in range(0, 10):
+    [goal_reached, collisions, steps, path] = main(grid,
+                                                   init,
+                                                   goal,
+                                                   steering_noise,
+                                                   distance_noise,
+                                                   measurement_noise,
+                                                   weight_data,
+                                                   weight_smooth,
+                                                   p_gain,
+                                                   d_gain)
+    plots_data.append(path)
+for plot_data in plots_data:
+    for data in plot_data:
+        sample_index = random.randint(0, 1000)
+        p_path.scatter(data[0], data[1], c=[[sample_index / 1000.,
+                                             (1000 - sample_index) / 1000.,
+                                             (1000 - sample_index) / 1000.]])
+plt.show()
 
 
 def twiddle(init_params):

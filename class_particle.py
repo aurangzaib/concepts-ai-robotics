@@ -63,7 +63,7 @@ class particles:
 
     # --------
     #
-    # sensing and resampling
+    # sensing and re-sampling
     #
 
     def sense(self, Z):
@@ -71,7 +71,7 @@ class particles:
         for i in range(self.N):
             w.append(self.data[i].measurement_prob(Z))
 
-        # resampling (careful, this is using shallow copy)
+        # re-sampling wheel algorithm (careful, this is using shallow copy)
         p3 = []
         index = int(random.random() * self.N)
         beta = 0.0

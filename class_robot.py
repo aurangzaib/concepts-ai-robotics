@@ -3,12 +3,9 @@ import numpy as np
 
 
 class Robot(object):
-    # --------
-    # init:
-    # creates robot and initializes location/orientation to 0, 0, 0
-    #
-
     def __init__(self, length=0.5):
+        # creates robot and initializes location/orientation to 0, 0, 0
+
         self.x = 0.0
         self.y = 0.0
         self.orientation = 0.0
@@ -19,21 +16,13 @@ class Robot(object):
         self.num_collisions = 0
         self.num_steps = 0
         self.steering_drift = 0.0
-    # --------
-    # set:
-    #	sets a robot coordinate
-    #
 
     def set(self, new_x, new_y, new_orientation):
+        # sets a robot coordinate
 
         self.x = float(new_x)
         self.y = float(new_y)
         self.orientation = float(new_orientation) % (2.0 * np.pi)
-
-    # --------
-    # set_noise:
-    #	sets the noise parameters
-    #
 
     def set_noise(self, new_s_noise, new_d_noise, new_m_noise=0.0):
         # makes it possible to change the noise parameters
@@ -42,17 +31,19 @@ class Robot(object):
         self.distance_noise = float(new_d_noise)
         self.measurement_noise = float(new_m_noise)
 
-    # --------
-    # check:
-    #    checks of the robot pose collides with an obstacle, or
-    # is too far outside the plane
-
     def check_collision(self, grid):
+        # checks of the robot pose collides with an obstacle, or
+        # is too far outside the plane
+
         for i in range(len(grid)):
             for j in range(len(grid[0])):
+                """
+                whenever grid cell is blocked
+                find the distance between grid cell position and robot position
+                if distance is small it means robot is about to collide
+                """
                 if grid[i][j] == 1:
-                    dist = np.sqrt((self.x - float(i)) ** 2 +
-                                (self.y - float(j)) ** 2)
+                    dist = np.sqrt((self.x - float(i)) ** 2 + (self.y - float(j)) ** 2)
                     if dist < 0.5:
                         self.num_collisions += 1
                         return False
@@ -60,21 +51,19 @@ class Robot(object):
 
     def check_goal(self, goal, threshold=1.0):
         dist = np.sqrt((float(goal[0]) - self.x) ** 2 + (float(goal[1]) - self.y) ** 2)
+        """
+        find distance between robot location and goal location
+        if distance is small it means robot has reached the goal
+        """
         return dist < threshold
 
     def set_steering_drift(self, drift):
-        """
-        Sets the systematical steering drift parameter
-        """
+        # Sets the systematical steering drift parameter
         self.steering_drift = drift
 
-    # --------
-    # move:
-    #    steering = front wheel steering angle, limited by max_steering_angle
-    #    distance = total distance driven, most be non-negative
-
-    def move(self, grid, steering, distance,
-             tolerance=0.001, max_steering_angle=np.pi / 4.0):
+    def move(self, grid, steering, distance, tolerance=0.001, max_steering_angle=np.pi / 4.0):
+        #  steering = front wheel steering angle, limited by max_steering_angle
+        #  distance = total distance driven, most be non-negative
 
         if steering > max_steering_angle:
             steering = max_steering_angle
@@ -97,10 +86,12 @@ class Robot(object):
         distance2 = random.gauss(distance, self.distance_noise)
 
         # Execute motion
+        """
+        y = mx where m = tan(steering)
+        """
         turn = np.tan(steering2) * distance2 / res.length
 
         if abs(turn) < tolerance:
-
             # approximate by straight line motion
 
             res.x = self.x + (distance2 * np.cos(self.orientation))
@@ -108,7 +99,6 @@ class Robot(object):
             res.orientation = (self.orientation + turn) % (2.0 * np.pi)
 
         else:
-
             # approximate bicycle model for motion
 
             radius = distance2 / turn
@@ -166,36 +156,29 @@ class Robot(object):
             self.x = cx + (np.sin(self.orientation) * radius)
             self.y = cy - (np.cos(self.orientation) * radius)
 
-    # --------
-    # sense:
-    #
-
     def sense(self):
-
         return [random.gauss(self.x, self.measurement_noise),
                 random.gauss(self.y, self.measurement_noise)]
 
-    # --------
-    # measurement_prob
-    #    computes the probability of a measurement
-    #
-
     def measurement_prob(self, measurement):
+        # computes the probability of a measurement
 
         # compute errors
         error_x = measurement[0] - self.x
         error_y = measurement[1] - self.y
 
         # calculate Gaussian
-        error = np.exp(- (error_x ** 2) / (self.measurement_noise ** 2) / 2.0) \
-                / np.sqrt(2.0 * np.pi * (self.measurement_noise ** 2))
-        error *= np.exp(- (error_y ** 2) / (self.measurement_noise ** 2) / 2.0) \
-                 / np.sqrt(2.0 * np.pi * (self.measurement_noise ** 2))
+        error = np.exp(- (error_x ** 2) / (self.measurement_noise ** 2) / 2.0) / np.sqrt(
+            2.0 * np.pi * (self.measurement_noise ** 2))
+        error *= np.exp(- (error_y ** 2) / (self.measurement_noise ** 2) / 2.0) / np.sqrt(
+            2.0 * np.pi * (self.measurement_noise ** 2))
 
         return error
 
     def cte(self, radius):
         """
+        NOT USED IN SLAM
+        
         this is the method which is used to provide the cross track error for a race track.
         previously we were using y as a cte but in real world we have to use other parameters 
         for the cte instead of only y. here we now use radius as a parameter
