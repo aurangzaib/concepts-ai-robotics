@@ -1,7 +1,7 @@
 grid = [[0, 0, 1, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0],
+        [0, 0, 1, 0, 1, 0],
         [0, 0, 1, 1, 1, 0]]
 heuristic = [[9, 8, 7, 6, 5, 4],
              [8, 7, 6, 5, 4, 3],
@@ -16,10 +16,11 @@ init = [0, 0]
 
 goal = [len(grid) - 1, len(grid[0]) - 1]
 
-grid_dynamic = [[0, 0, 0, 0],
-                [0, 0, 0, 0],
-                [0, 0, 0, 0],
-                [0, 1, 1, 0]]
+grid_dynamic = [[0, 0, 1, 0, 1, 0],
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 0, 0, 1, 0],
+                [0, 0, 1, 1, 1, 0]]
 
 goal_dynamic = [0, 3]
 cost = 1
@@ -27,6 +28,7 @@ delta_name = ['^', '<', 'v', '>']
 collision_cost = 1000
 success_prob = 0.5
 FREE = 0
+
 
 # Breadth First Planning
 def search(_grid, _delta, _init, _goal, _cost):
@@ -65,8 +67,8 @@ def search(_grid, _delta, _init, _goal, _cost):
                     x2 = x + _delta[index][0]
                     y2 = y + _delta[index][1]
                     _boundary_condition = 0 <= x2 < len(_grid) and 0 <= y2 < len(_grid[0])
-                    _grid_is_free = _closed[x2][y2] is FREE and _grid[x2][y2] is FREE
                     if _boundary_condition:
+                        _grid_is_free = _closed[x2][y2] is FREE and _grid[x2][y2] is FREE
                         if _grid_is_free:
                             g2 = g + _cost
                             _open.append([g2, x2, y2])
@@ -81,9 +83,10 @@ def search(_grid, _delta, _init, _goal, _cost):
     if resign is True:
         print 'Fail'
     elif found is True:
-        return [g, x, y, action, _expand]
+        return [g, x, y, _action, _expand]
     else:
         return 'Unknown Error'
+
 
 # A* Planning
 def heuristic_search(grid, heuristic, init, goal, cost):
@@ -164,8 +167,7 @@ def heuristic_search(grid, heuristic, init, goal, cost):
 
 
 def trace_search(grid, init, goal, _action):
-    policy = [[' ' for row in range(len(grid[0]))]
-              for col in range(len(grid))]
+    policy = [[' ' for row in range(len(grid[0]))] for col in range(len(grid))]
     # mark the goal coordinates as *
     __x = goal[0]
     __y = goal[1]
@@ -195,10 +197,11 @@ def trace_search(grid, init, goal, _action):
         print policy[_index]
     return policy
 
+
 # Optimal Policy on each Node or Location
 def dynamic_policy(_grid, _goal, _cost, _delta):
     # initialize value with 99
-    _value = [[100 for row in range(len(_grid[0]))] for col in range(len(_grid))]
+    _value = [[99 for row in range(len(_grid[0]))] for col in range(len(_grid))]
     _policy = [[' ' for row in range(len(_grid[0]))] for col in range(len(_grid))]
     _change = True
     """
@@ -255,24 +258,24 @@ def dynamic_policy(_grid, _goal, _cost, _delta):
                     for _index in range(len(_delta)):
                         _x2 = _x + _delta[_index][0]
                         _y2 = _y + _delta[_index][1]
-                        if 0 <= _x2 < len(grid) and 0 <= _y2 < len(grid[0]):
-                            if _grid[_x2][_y2] is FREE:
-                                _v2 = _value[_x2][_y2] + _cost
-                                """
-                                    |   |                   |   |
-                                  __________             __________
-                                    |   | 99     --->       |   | 1
-                                  __________             __________      
-                                    | 99| 0                 | 1 | 0
-                                """
-                                if _v2 < _value[_x][_y]:
-                                    _value[_x][_y] = _v2
-                                    _policy[_x][_y] = delta_name[_index]
-                                    _change = True
+                        _x_boundary = _x2 >= 0 and _x2 < len(_grid)
+                        _y_boundary = _y2 >= 0 and _y2 < len(_grid[0])
+                        if _x_boundary and _y_boundary and _grid[_x2][_y2] is 0:
+                            _v2 = _value[_x2][_y2] + _cost
+                            """
+                                |   |                   |   |
+                              __________             __________
+                                |   | 99     --->       |   | 1
+                              __________             __________      
+                                | 99| 0                 | 1 | 0
+                            """
+                            if _v2 < _value[_x][_y]:
+                                _value[_x][_y] = _v2
+                                _policy[_x][_y] = delta_name[_index]
+                                _change = True
+    return [_value, _policy]  # Taking in account the probability of Robot movement and Wall Hitting Penalty
 
-    return [_value, _policy]
 
-# Taking in account the probability of Robot movement and Wall Hitting Penalty
 def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_prob):
     # initialize value with 1000
     _value = [[1000 for row in range(len(_grid[0]))] for col in range(len(_grid))]
@@ -315,15 +318,14 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
                             else:
                                 _p = _failure_prob
 
-                            _x_boundary = 0 <= _x2 < len(_grid)
-                            _y_boundary = 0 <= _y2 < len(grid[0])
-                            _grid_free = _grid[_x2][_y2] is FREE
+                            _x_boundary = _x2 >= 0 and _x2 < len(_grid)
+                            _y_boundary = _y2 >= 0 and _y2 < len(_grid[0])
                             """
                             if it is within boundaries then no penalty 
                             if its hitting the wall i.e. going outside the boundary
                             then apply penalty
                             """
-                            if _x_boundary and _y_boundary and _grid_free:
+                            if _x_boundary and _y_boundary and _grid[_x2][_y2] is FREE:
                                 _v2 += _value[_x2][_y2] * _p
                             else:
                                 _v2 += _collision_cost * _p

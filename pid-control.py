@@ -85,7 +85,6 @@ def smooth_constrained_cyclic(_path,
                     _new_path[_i][_j] += weight_constrained_smooth * constrained_smooth_backward
                     _new_path[_i][_j] += weight_constrained_smooth * constrained_smooth_forward
 
-
         # compare the outcomes of the gradient and descent results
         _change += abs(_new_path[_i][_j] - _old_value)
     return _new_path

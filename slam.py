@@ -3,6 +3,7 @@ from class_particle import particles
 from class_plannning import plan
 import matplotlib.pyplot as plt
 import random
+import numpy as np
 
 
 # --------
@@ -208,4 +209,11 @@ def twiddle(init_params):
     print ' '
     return params
 
+
 # twiddle([weight_data, weight_smooth, p_gain, d_gain])
+
+omega = np.matrix('2 -1 0; -1 2 -1; 0 -1 1')
+xi = np.matrix('-8; 2; 3')
+print "inv: ", omega.getI()
+results = omega.getI() * xi
+print results

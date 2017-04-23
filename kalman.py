@@ -47,7 +47,7 @@ class KalmanFilter(object):
 
         # mean value always increases
         # uncertainty or confidence adjusts itself
-        print "result:", [mean, variance]
+        print ("result:", [mean, variance])
         """
         sensor only sees position and not the velocity
         but using kalman filter, we infer the velocity 
@@ -61,26 +61,42 @@ class KalmanFilter(object):
                                                    motion_vector,  # u
                                                    state_transition_matrix,  # F
                                                    measurement_function,  # H
-                                                   measurement_noise,  # R
+                                                   noise,  # R
                                                    identity_matrix,  # I
                                                    measurements  # z
                                                    ):
         for index in range(len(measurements)):
             # prediction step
+            """
+            x' = F*x + u
+            P'  = F*P*Ft
+            """
             estimate_matrix = (state_transition_matrix * estimate_matrix) + motion_vector
-            uncertainty_covariance = (
-                                     state_transition_matrix * uncertainty_covariance) * state_transition_matrix.transpose()
+            uncertainty_covariance = state_transition_matrix * uncertainty_covariance * state_transition_matrix.transpose()
 
             # measurement step
+            """
+            y = zt - H*x
+            S = H * P * Ht + R
+            K = P * Ht * inv(S)
+            x' = x + K*y
+            P' = I - K*H * P
+            """
             z_t = np.matrix([measurements[index]])
             measurement = z_t.transpose() - (measurement_function * estimate_matrix)
-            system_error = measurement_function * uncertainty_covariance * measurement_function.transpose() + measurement_noise
+            system_error = measurement_function * uncertainty_covariance * measurement_function.transpose() + noise
             kalman_gain = uncertainty_covariance * measurement_function.transpose() * system_error.getI()
             estimate_matrix = estimate_matrix + (kalman_gain * measurement)
             uncertainty_covariance = (identity_matrix - (kalman_gain * measurement_function)) * uncertainty_covariance
 
-        print "estimation (x): \n", estimate_matrix
-        print "prediction (P): \n", uncertainty_covariance
+        print 'estimation (x): \n', estimate_matrix
+        print 'prediction (P): \n', uncertainty_covariance
+        """
+        kalman filter now has predicted:
+            the velocities and positions
+            the covariance of positions and velocities
+        """
+        return estimate_matrix, uncertainty_covariance
 
 
 x = np.matrix('0.;0.')  # estimate matrix
@@ -100,29 +116,29 @@ z = [1, 2, 3]  # measurements
 # 4 dimensional space: x and y, x_dot and y_dot
 
 dt = 0.1
-initial_xy = [-4., 8.]
+initial_xy = [-8., 8.]
 # initial state vector; both velocities are zero initially
-x__2d = np.matrix([[initial_xy[0]], [initial_xy[1]], [0.], [0.]])
+x__4d = np.matrix([[initial_xy[0]], [initial_xy[1]], [0.], [0.]])
 # uncertainty covariance matrix; high certainty for positions
 # low certainty for velocities
 # diagonal elements represent uncertainties, other elements are zero always
-P__2d = np.matrix('0 0 0 0; 0 0 0 0; 0 0 1000. 0; 0 0 0 1000.')
+P__4d = np.matrix('0 0 0 0; 0 0 0 0; 0 0 1000. 0; 0 0 0 1000.')
 # motion vector (no external motion)
-u__2d = np.matrix('0.; 0.; 0; 0')
+u__4d = np.matrix('0.; 0.; 0; 0')
 # state transition matrix
-F__2d = np.matrix([[1., 0, dt, 0], [0, 1., 0, dt], [0, 0, 1., 0], [0, 0, 0, 1.]])
+F__4d = np.matrix([[1., 0, dt, 0], [0, 1., 0, dt], [0, 0, 1., 0], [0, 0, 0, 1.]])
 # measurement matrix
 # only x and y are observable
 # both velocities are not observables
-H__2d = np.matrix('1. 0 0 0; 0 1. 0 0')
+H__4d = np.matrix('1. 0 0 0; 0 1. 0 0')
 # measurement noise
-R__2d = np.matrix('0.1 0; 0 0.1')
+R__4d = np.matrix('0.1 0; 0 0.1')
 # identity matrix
-I__2d = np.matrix('1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1')
+I__4d = np.matrix('1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1')
 # measurements
-z__2d = [[1., 4.], [6., 0.], [11., -4.], [16., -8.]]
+z__4d = [[0., 4.], [8., 0.], [16., -4.], [24., -8.]]  # , [21., -12.]
 
-KalmanFilter.multi_variant__one_dimension_kalman_filter(x__2d, P__2d,
-                                                        u__2d, F__2d,
-                                                        H__2d, R__2d,
-                                                        I__2d, z__2d)
+KalmanFilter.multi_variant__one_dimension_kalman_filter(x__4d, P__4d,
+                                                        u__4d, F__4d,
+                                                        H__4d, R__4d,
+                                                        I__4d, z__4d)

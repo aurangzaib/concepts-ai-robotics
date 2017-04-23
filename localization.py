@@ -14,10 +14,8 @@ motions = [1, 1]
 def sense(_p, measurement):
     q = []
     for sense_index in range(len(_p)):
-        if world[sense_index] is measurement:
-            q.append(_p[sense_index] * pHit)
-        else:
-            q.append(_p[sense_index] * pMiss)
+        value = p[sense_index] * pHit if (world[sense_index] is measurement) else p[sense_index] * pMiss
+        q.append(value)
     return q
 
 
@@ -89,7 +87,6 @@ def perform_move_cycle():
     T = 10000
     for index in range(T):
         q = move_algo_with_inaccurate_movement(q, 1)
-    print q
 
 
 """
@@ -126,18 +123,19 @@ def sense_n_by_n(_p, _colors, _measurement, _sensor_right):
     based on measurements given
     """
     for outer_index in range(len(_colors)):
-        for inner_index in range(len(_colors[outer_index])):
-            if _colors[outer_index][inner_index] is _measurement:
-                _q[outer_index][inner_index] = _p[outer_index][inner_index] * _sensor_right
-            else:
-                _q[outer_index][inner_index] = _p[outer_index][inner_index] * _sensor_wrong
+        for inner_index in range(len(_colors[0])):
+            _condition = _colors[outer_index][inner_index] is _measurement
+            _right = _p[outer_index][inner_index] * _sensor_right
+            _wrong = _p[outer_index][inner_index] * _sensor_wrong
+
+            _q[outer_index][inner_index] = _right if _condition else _wrong
             normalize_factor += _q[outer_index][inner_index]
     """
     normalize the values so that 
     sum is always 1
     """
     for outer_index in range(len(_colors)):
-        for inner_index in range(len(_colors[outer_index])):
+        for inner_index in range(len(_colors[0])):
             _q[outer_index][inner_index] /= normalize_factor
     """
     return the computed probabilities
@@ -147,39 +145,38 @@ def sense_n_by_n(_p, _colors, _measurement, _sensor_right):
 
 def move_n_by_n(_p, _motions, _p_move):
     _p_stay = 1. - _p_move
-    # initialize with 0 having same dimensions as
-    # as p. deepcopy(p) could also be used but it would be slow
-    __q = [[0 for row in range(len(_p[0]))] for col in range(len(p))]
-    # x and y movements
-    motions_x = _motions[1]
     motions_y = _motions[0]
-
+    motions_x = _motions[1]
+    """
+    initialize with 0 having same dimensions as p. 
+    deepcopy(p) could also be used
+    """
+    __q = [[0 for row in range(len(_p[0]))] for col in range(len(_p))]
     for vertical_index in range(len(_p)):
-        for horizontal_index in range(len(_p[vertical_index])):
-            # probability that the robot moved
-            # e.g. p[0][0] copied to q[0][1]
+        for horizontal_index in range(len(_p[0])):
+            """
+            probability that the robot moved
+            e.g. p[0][0] copied to q[0][1]
+            """
             move_value = _p[vertical_index][horizontal_index] * _p_move
-
-            # probability that the robot didn't move
-            # e.g. p[0][1] copied to q[0][1]
-            not_move_value = _p[motions_y % len(_p)][motions_x % len(_p[vertical_index])] * _p_stay
-
-            # __q now have prob of moved and not_moved
+            """
+            probability that the robot didn't move
+            e.g. p[0][1] copied to q[0][1]
+            """
+            not_move_value = _p[motions_y % len(_p)][motions_x % len(_p[0])] * _p_stay
+            """
+            __q now have prob of moved and not_moved
+            """
             __q[motions_y][motions_x] = move_value + not_move_value
-
-            # increment x index
-            motions_x = (motions_x + 1) % len(_p[vertical_index])
-
-        # increment y index
+            """
+            increment x index
+            """
+            motions_x = (motions_x + 1) % len(_p[0])
+        """
+        increment y index
+        """
         motions_y = (motions_y + 1) % len(_p)
     return __q
-
-
-def show_nxn(p):
-    for outer_index in range(len(p)):
-        for inner_index in range(len(p[outer_index])):
-            print p[outer_index][inner_index], " ",
-        print
 
 
 colors_n_by_n = [['R', 'G', 'G', 'R', 'R'],
@@ -196,11 +193,12 @@ def perform_localization_nxn(_colors, _measurements, _motions, _s_right, _p_move
     # generating uniform distribution
     p_init = 1.0 / float(len(_colors)) / float(len(_colors[0]))
     q = [[p_init for row in range(len(_colors[0]))] for col in range(len(_colors))]
-
     for index in range(len(_measurements)):
         q = move_n_by_n(q, _motions[index], _p_move)
         q = sense_n_by_n(q, _colors, _measurements[index], _s_right)
+    for _q in q:
+        print _q
     return q
 
 
-show_nxn(perform_localization_nxn(colors_n_by_n, measurements_n_by_n, motions_nxn, sensor_right, p_move))
+q = perform_localization_nxn(colors_n_by_n, measurements_n_by_n, motions_nxn, sensor_right, p_move)
