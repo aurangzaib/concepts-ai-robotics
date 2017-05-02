@@ -94,13 +94,14 @@ def perform_move_cycle():
     update(move)    --> loses entropy --> info decreases
     measure(sense)  --> gains entropy --> info increases
     
-      (sense)   -->    (move)
-                <--    
-        ^
-        |
-        |
-        |
-    (initial belief) normally uniform distribution
+          (sense - product - bayes rule)   -->   (move - convolution - total prob. theorem)
+                                           <--    
+                ^
+                |
+                |
+                |
+          (initial belief)
+    normally uniform distribution
     
     sense --> probability distribution, world values, current measurement, sensor right probability
     move  --> probability distribution, motion, move probability

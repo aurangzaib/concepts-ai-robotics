@@ -3,6 +3,7 @@ grid = [[0, 0, 1, 0, 1, 0],
         [0, 0, 1, 0, 0, 0],
         [0, 0, 1, 0, 1, 0],
         [0, 0, 1, 1, 1, 0]]
+# manhattan distance heuristic
 heuristic = [[9, 8, 7, 6, 5, 4],
              [8, 7, 6, 5, 4, 3],
              [7, 6, 5, 4, 3, 2],
@@ -238,7 +239,7 @@ def dynamic_policy(_grid, _goal, _cost, _delta):
                 # use debugger at this point to see how its proceeding
                 """
                 if we have reached on the goal position and value is larger. then assign it 0.
-                goal in dynamic programming is 0
+                goal in dynamic programming is starting point
                 """
                 if _x is _goal[0] and _y is _goal[1]:
                     if _value[_x][_y] > 0:
@@ -273,7 +274,7 @@ def dynamic_policy(_grid, _goal, _cost, _delta):
                                 _value[_x][_y] = _v2
                                 _policy[_x][_y] = delta_name[_index]
                                 _change = True
-    return [_value, _policy]  # Taking in account the probability of Robot movement and Wall Hitting Penalty
+    return [_value, _policy]
 
 
 def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_prob):
@@ -336,7 +337,7 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
                             _value[_x][_y] = _v2
                             _policy[_x][_y] = delta_name[_index]
                             _change = True
-    return [_value, _policy]
+    return [_value, _policy]  # Taking in account the probability of Robot movement and Wall Hitting Penalty
 
 
 [g, x, y, action, expand] = search(grid,
