@@ -262,7 +262,7 @@ x_p, y_p = p_controller(robot,
 robot = make_robot(False)
 x_pd, y_pd = pd_controller(robot,
                            0.3,
-                           3.0,
+                           1.0,
                            number_of_steps)
 """
  - pd + systematic bias (in this case steering drift)

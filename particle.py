@@ -11,9 +11,6 @@ def reverse_sort():
     new_prob.sort(reverse=True)
     for index in range(len(new_prob)):
         for inner_index in range(len(new_prob)):
-            print orig_prob[index],
-            print " compared with ", new_prob[inner_index],
-            print "result: ", orig_prob[index] >= new_prob[inner_index]
             if orig_prob[index] >= new_prob[inner_index]:
                 particles[inner_index] = new_array[index]
                 break
@@ -44,6 +41,5 @@ def re_sample_wheel(iteration=1):
                 # '% number_of_samples' -> keeps the array reference from going out of bounds
             p3.append(p[sample_index])
     print "p3: ", p3
-
 
 re_sample_wheel(2)

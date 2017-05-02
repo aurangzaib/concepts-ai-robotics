@@ -185,7 +185,7 @@ class Robot(object):
 
         a rectangle shaped race track is under consideration when applying logic below
         """
-
+        cte = 0.0
         # case - 1:
         # robot is in 1st region where x is less than radius.
         # we find the error using distance formula
