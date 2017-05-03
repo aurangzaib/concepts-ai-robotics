@@ -30,17 +30,17 @@ def smooth_gradient_descent(_path, weight_data=0.0, weight_smooth=0.1, tolerance
         the larger the values the sharper the edges
         on data_weight=1 we will have 90 degree edges
         """
-        for _i in range(1, len(_new_path) - 1):
-            for _j in range(len(_new_path[0])):
+        for row in range(1, len(_new_path) - 1):
+            for col in range(len(_new_path[0])):
                 # values before updates
-                _old_value = _new_path[_i][_j]
+                _old_value = _new_path[row][col]
                 # gradient and descent equations
-                _gradient = weight_data * (_path[_i][_j] - _new_path[_i][_j])
-                _descent = weight_smooth * (_new_path[_i + 1][_j] + _new_path[_i - 1][_j] - (2. * _new_path[_i][_j]))
+                _gradient = _path[row][col] - _new_path[row][col]
+                _descent = _new_path[row + 1][col] + _new_path[row - 1][col] - (2. * _new_path[row][col])
                 # save results of the equations
-                _new_path[_i][_j] += _gradient + _descent
+                _new_path[row][col] += weight_data * _gradient + weight_smooth * _descent
                 # compare the outcomes of the gradient and descent results
-                _change += abs(_new_path[_i][_j] - _old_value)
+                _change += abs(_new_path[row][col] - _old_value)
     return _new_path
 
 
@@ -48,7 +48,6 @@ def smooth_constrained_cyclic(_path,
                               weight_data=0.07,
                               weight_smooth=0.1,
                               tolerance=0.000001):
-
     weight_constrained_smooth = 0.5 * weight_smooth
     _new_path = deepcopy(_path)
     _change = tolerance
@@ -60,33 +59,33 @@ def smooth_constrained_cyclic(_path,
         loop over each path on (i,j) and apply gradient descent equations.
         each time update the difference and store in change variable.
         """
-        for _i in range(len(_new_path)):
-            if not fix_points[_i]:
-                for _j in range(len(_new_path[0])):
+        for row in range(len(_new_path)):
+            if not fix_points[row]:
+                for col in range(len(_new_path[0])):
                     # values before updates
-                    _old_value = _new_path[_i][_j]
+                    _old_value = _new_path[row][col]
 
                     # gradient and descent equations
-                    _gradient = _path[_i][_j] - _new_path[_i][_j]
-                    _descent = _new_path[(_i + 1) % len(_path)][_j] + _new_path[(_i - 1) % len(_path)][_j]
-                    _descent -= 2. * _new_path[_i][_j]
+                    _gradient = _path[row][col] - _new_path[row][col]
+                    _descent = _new_path[(row + 1) % len(_path)][col] + _new_path[(row - 1) % len(_path)][col]
+                    _descent -= 2. * _new_path[row][col]
 
                     # constrained smoothing equations
-                    constrained_smooth_backward = 2. * (_new_path[(_i - 1) % len(_path)][_j])
-                    constrained_smooth_backward -= _new_path[(_i - 2) % len(_path)][_j]
-                    constrained_smooth_backward -= _new_path[_i][_j]
+                    constrained_smooth_backward = 2. * (_new_path[(row - 1) % len(_path)][col])
+                    constrained_smooth_backward -= _new_path[(row - 2) % len(_path)][col]
+                    constrained_smooth_backward -= _new_path[row][col]
 
-                    constrained_smooth_forward = 2. * (_new_path[(_i + 1) % len(_path)][_j])
-                    constrained_smooth_forward -= _new_path[(_i + 2) % len(_path)][_j]
-                    constrained_smooth_forward -= _new_path[_i][_j]
+                    constrained_smooth_forward = 2. * (_new_path[(row + 1) % len(_path)][col])
+                    constrained_smooth_forward -= _new_path[(row + 2) % len(_path)][col]
+                    constrained_smooth_forward -= _new_path[row][col]
 
                     # save results of the equations
-                    _new_path[_i][_j] += weight_data * _gradient + weight_smooth * _descent
-                    _new_path[_i][_j] += weight_constrained_smooth * constrained_smooth_backward
-                    _new_path[_i][_j] += weight_constrained_smooth * constrained_smooth_forward
+                    _new_path[row][col] += weight_data * _gradient + weight_smooth * _descent
+                    _new_path[row][col] += weight_constrained_smooth * constrained_smooth_backward
+                    _new_path[row][col] += weight_constrained_smooth * constrained_smooth_forward
 
         # compare the outcomes of the gradient and descent results
-        _change += abs(_new_path[_i][_j] - _old_value)
+        _change += abs(_new_path[row][col] - _old_value)
     return _new_path
 
 
@@ -95,11 +94,12 @@ def p_controller(_robot, tau_p, n=20, speed=1.0):
     _y_trajectory = []
 
     for _index in range(n):
+        cte = robot.y
         # push current coordinates
         _x_trajectory.append(_robot.x)
         _y_trajectory.append(_robot.y)
         # steering for proportional
-        steering = -tau_p * _robot.y
+        steering = -tau_p * cte
         _robot.move_simple(steering, speed)
     return _x_trajectory, _y_trajectory
 
@@ -107,18 +107,19 @@ def p_controller(_robot, tau_p, n=20, speed=1.0):
 def pd_controller(_robot, tau_p, tau_d, n=20, speed=1.0):
     _x_trajectory = []
     _y_trajectory = []
-    cte_old = _robot.y
+    cte = robot.y
     for _index in range(n):
+        cte_old = cte
+        cte = robot.y
         # push current coordinates
         _x_trajectory.append(_robot.x)
         _y_trajectory.append(_robot.y)
         # steering for proportional and differential
-        _proportional = -tau_p * _robot.y
-        _differential = -tau_d * (_robot.y - cte_old)
+        _proportional = -tau_p * cte
+        _differential = -tau_d * (cte - cte_old)
         # combined steering
         steering = _proportional + _differential
         # move the robot
-        cte_old = _robot.y
         _robot.move_simple(steering, speed)
     return _x_trajectory, _y_trajectory
 
@@ -132,23 +133,26 @@ def pid_controller(_robot, _radius, _params, n=100, _speed=1.0):
     _y_trajectory = []
 
     _error = 0
-    _cte_old = _robot.y
+    _cte = _robot.y
     _cte_sum = 0
 
     for _index in range(n * 2):
-        _cte = _robot.y
+        # previous value
+        _cte_old = _cte
+        # current value
+        _cte = robot.y
+        # sum of cte
+        _cte_sum += _cte
         # push current coordinates
         _x_trajectory.append(_robot.x)
         _y_trajectory.append(_robot.y)
         # accumulating all the error
-        _cte_sum += _cte
         # steering for pid
         _proportional = -_tau_p * _cte
         _differential = -_tau_d * (_cte - _cte_old)
         _integral = -_tau_i * _cte_sum
         _steering = _proportional + _differential + _integral
         # save old value of the cte i.e. y before moving the robot
-        _cte_old = _cte
         # move the robot with the steering and speed (how much distance)
         _robot.move_simple(_steering, _speed)
         if _index >= n:
@@ -249,7 +253,7 @@ path_cyclic_smooth = smooth_constrained_cyclic(path_cyclic)
 number_of_steps = 200
 """
  - only proportional controller
- - robot will pass through target axis but with high overshoot
+ - robot will pass through target axis but with high overshoot/undershoot
 """
 robot = make_robot(False)
 x_p, y_p = p_controller(robot,
@@ -257,7 +261,7 @@ x_p, y_p = p_controller(robot,
                         number_of_steps)
 """
  - proportional and differential (pd) controller
- - robot will come to target axis with low overshoot
+ - robot will come to target axis with low overshoot/undershoot
 """
 robot = make_robot(False)
 x_pd, y_pd = pd_controller(robot,
@@ -305,7 +309,6 @@ x_pid_twiddle, y_pid_twiddle, err_twiddle = pid_controller(robot,
                                                            0,
                                                            params,
                                                            number_of_steps)
-
 robot = Robot(20.)
 radius = 25.
 orientation = np.pi / 2
@@ -316,17 +319,17 @@ x_pid_race_track, y_pid_race_track, err_race_track = pid_controller_race_track(r
                                                                                radius,
                                                                                params_race_track,
                                                                                number_of_steps)
-
 """
 notice in the output that:
     - p controller keeps oscillating around target
     - pd controller reduces the oscillation around target
-    - systematic bias (steering drift) makes pd controller to oscillate around the initial y value
+    - systematic bias (steering drift) makes pd controller to oscillate around the cross track error
     - pid controller removes the oscillation introduced by the systematic bias
     - tau_i determines how fast pid removes the oscillations and approaches to the target point
     - when pid is used with twiddle, it yields the best results and the oscillation is very low
+    - twiddle optimizes 1 param at a time -- twiddle is good only in 1D
+    - in real world, adaptive sampler is used in place of twiddle
 """
-
 if PLOT_CONTROLLERS is True:
     plot_pid_controllers(x_p, y_p,  # p controller
                          x_pd, y_pd,  # pd controller
@@ -334,16 +337,13 @@ if PLOT_CONTROLLERS is True:
                          x_pid, y_pid,  # pid controller
                          x_pid_twiddle, y_pid_twiddle,
                          x_pid_race_track, y_pid_race_track)  # pid controller with twiddle
-
 if PLOT_SMOOTHING is True:
     plot_smoothing(path,
                    path_smooth,
                    path_straight,
                    path_like_original)
-
 if PLOT_CYCLIC_SMOOTHING is True:
     plot_cyclic_smoothing(path_cyclic,
                           path_cyclic_smooth)
-
 if IS_PLOT_ENABLE is True:
     plt.show()
