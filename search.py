@@ -32,7 +32,7 @@ FREE = 0
 
 
 # Breadth First Planning
-def search(_grid, _delta, _init, _goal, _cost):
+def breadth_first_search(_grid, _delta, _init, _goal, _cost):
     # initialize closed with zeros having same dimensions as grid
     _closed = [[0 for row in range(len(_grid[0]))] for col in range(len(_grid))]
     _expand = [[-1 for row in range(len(_grid[0]))] for col in range(len(_grid))]
@@ -341,7 +341,7 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
     return _value, _policy
 
 
-[g, x, y, action, expand] = search(grid,
+[g, x, y, action, expand] = breadth_first_search(grid,
                                    delta,
                                    init,
                                    goal,
