@@ -39,12 +39,12 @@ def search(_grid, _delta, _init, _goal, _cost):
     _action = [[-1 for row in range(len(_grid[0]))] for col in range(len(_grid))]
     _init[0] = 0
     _init[1] = 0
-    x = _init[0]
-    y = _init[1]
+    row = _init[0]
+    col = _init[1]
     g = 0
     _closed[_init[0]][_init[1]] = 1
     # note that g is 0th element. because its the criteria for sorting
-    _open = [[g, x, y]]
+    _open = [[g, row, col]]
     count = 0
     resign = False
     found = False
@@ -56,35 +56,37 @@ def search(_grid, _delta, _init, _goal, _cost):
             _open.reverse()
             _next = _open.pop()  # remove the element with lowest g value
             g = _next[0]
-            x = _next[1]
-            y = _next[2]
-            _expand[x][y] = count
+            row = _next[1]
+            col = _next[2]
+            _expand[row][col] = count
             count += 1
-            if _goal[0] is x and _goal[1] is y:
+            if _goal[0] is row and _goal[1] is col:
                 found = True
             else:
                 for index in range(len(_delta)):
-                    # move forward to the next location
-                    x2 = x + _delta[index][0]
-                    y2 = y + _delta[index][1]
-                    _boundary_condition = 0 <= x2 < len(_grid) and 0 <= y2 < len(_grid[0])
+                    """
+                    move forward to the next location
+                    """
+                    new_row = row + _delta[index][0]
+                    new_col = col + _delta[index][1]
+                    _boundary_condition = 0 <= new_row < len(_grid) and 0 <= new_col < len(_grid[0])
                     if _boundary_condition:
-                        _grid_is_free = _closed[x2][y2] is FREE and _grid[x2][y2] is FREE
+                        _grid_is_free = _closed[new_row][new_col] is FREE and _grid[new_row][new_col] is FREE
                         if _grid_is_free:
                             g2 = g + _cost
-                            _open.append([g2, x2, y2])
-                            _closed[x2][y2] = 1
+                            _open.append([g2, new_row, new_col])
+                            _closed[new_row][new_col] = 1
                             """
                             saving which action from delta is performed used when tracing the policy
                             (x2,y2) are used instead of (x,y)
                             (x, y) are values of all possible tried combinations
                             (x2, y2) are values of the combination we used in the end
                             """
-                            _action[x2][y2] = index
+                            _action[new_row][new_col] = index
     if resign is True:
         print 'Fail'
     elif found is True:
-        return [g, x, y, _action, _expand]
+        return [g, row, col, _action, _expand]
     else:
         return 'Unknown Error'
 
@@ -170,10 +172,10 @@ def heuristic_search(grid, heuristic, init, goal, cost):
 def trace_search(grid, init, goal, _action):
     policy = [[' ' for row in range(len(grid[0]))] for col in range(len(grid))]
     # mark the goal coordinates as *
-    __x = goal[0]
-    __y = goal[1]
-    policy[__x][__y] = '*'
-    while __x != init[0] or __y != init[1]:
+    row = goal[0]
+    col = goal[1]
+    policy[row][col] = '*'
+    while row != init[0] or col != init[1]:
         """
         we took next positions when running find policy(path) algorithm as:
             x2 = x + delta(index)(0); y2 = y + delta(index)(1)
@@ -181,18 +183,18 @@ def trace_search(grid, init, goal, _action):
             x2 = x - delta(action(x)(y))(0); y2 = y - delta(action(x)(y))(1)
         where x2,y2 are original coord.; x,y are current coord.
         """
-        x2 = __x - delta[_action[__x][__y]][0]
-        y2 = __y - delta[_action[__x][__y]][1]
+        new_row = row - delta[_action[row][col]][0]
+        new_col = col - delta[_action[row][col]][1]
         """
         now we will draw the character based on which action was performed
         action[x][y] is the index from delta and every delta element has its assoc. character in the delta_name vector
         """
-        policy[x2][y2] = delta_name[_action[__x][__y]]
+        policy[new_row][new_col] = delta_name[_action[row][col]]
         """
         now save update x, y with x2, y2; recursion
         """
-        __x = x2
-        __y = y2
+        row = new_row
+        col = new_col
 
     for _index in range(len(policy)):
         print policy[_index]
@@ -308,7 +310,7 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
                             new_index is one of the stochastic index
                             for every new_index get the location
                             and assign it the value based on where it is
-                            so if stochastic index is 0 then its success probability else its failure
+                            so if stochastic index is 0 then its success-probability else its failure-probability
                             """
                             new_index = (_index + _stochastic_index) % len(_delta)
                             new_row = row + _delta[new_index][0]
@@ -364,22 +366,28 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
                                                           success_prob)
 
 print "\nsearch value : "
-for _v in expand: print _v
+for _v in expand:
+    print _v
 
 print "\nheuristic value : "
-for _e in a_expand: print _e
+for _e in a_expand:
+    print _e
 
 print "\nsearch policy: "
 trace_search(grid, init, goal, action)
 
 print "\ndynamic value: "
-for _v in dynamic_value: print _v
+for _v in dynamic_value:
+    print _v
 
 print "\ndynamic policy: "
-for _v in dynamic_policy: print _v
+for _v in dynamic_policy:
+    print _v
 
 print "\nstochastic value: "
-for _v in stochastic_value: print _v
+for _v in stochastic_value:
+    print _v
 
 print "\nstochastic policy: "
-for _v in stochastic_policy: print _v
+for _v in stochastic_policy:
+    print _v
