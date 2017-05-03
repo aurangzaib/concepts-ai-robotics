@@ -1,11 +1,11 @@
-p = [0, 0, 0, 1, 0]
-pHit = 0.8
-pMiss = 0.2
+p = [0.2, 0.2, 0.2, 0.2, 0.2]
+pHit = 0.9
+pMiss = 0.1
 pExact = 0.8
 pOvershoot = 0.1
 pUndershoot = 0.1
-world = ['green', 'red', 'red', 'green', 'green']
-measurements = ['red', 'green']
+world = ['green', 'green', 'red', 'green', 'red']
+measurements = ['red']
 motions = [1, 1]
 
 
@@ -16,6 +16,9 @@ def sense(_p, measurement):
     for sense_index in range(len(_p)):
         value = p[sense_index] * pHit if (world[sense_index] is measurement) else p[sense_index] * pMiss
         q.append(value)
+    normalizer = sum(q)
+    for index in range(len(q)):
+        q[index] /= normalizer
     return q
 
 

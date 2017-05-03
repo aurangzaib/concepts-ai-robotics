@@ -36,10 +36,16 @@ def run(grid, goal, s_path, params, printflag=False, speed=0.1, timeout=1000):
         if index < len(s_path):
             start_point = s_path[index]
             end_point = s_path[index + 1]
-
+            """
+            delta = [x2 - x1, y2 - y1]
+            R = [x - X1, Y - Y1] 
+            """
             _delta = [end_point[0] - start_point[0], end_point[1] - start_point[1]]
             _R = [estimate[0] - start_point[0], estimate[1] - start_point[1]]
-
+            """
+            u = RxDx + RyDy / root(Dx^2 + Dy^2)
+            cte = RyDx + RxDy / root(Dx^2 + Dy^2 
+            """
             _u = (_R[0] * _delta[0] + _R[1] * _delta[1]) / (_delta[0] ** 2 + _delta[1] ** 2)
             cte = (_R[1] * _delta[0] - _R[0] * _delta[1]) / (_delta[0] ** 2 + _delta[1] ** 2)
 
