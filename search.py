@@ -17,17 +17,17 @@ init = [0, 0]
 
 goal = [len(grid) - 1, len(grid[0]) - 1]
 
-grid_dynamic = [[0, 0, 1, 0, 1, 0],
-                [0, 0, 1, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0],
-                [0, 0, 0, 0, 1, 0],
-                [0, 0, 1, 1, 1, 0]]
+grid_dynamic = [[0, 0, 0, 1, 0, 0, 0],
+                [0, 1, 0, 0, 0, 1, 0],
+                [0, 1, 1, 0, 1, 1, 0],
+                [0, 1, 1, 1, 1, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0]]
 
-goal_dynamic = [0, 3]
+goal_dynamic = [0, 6]
 cost = 1
 delta_name = ['^', '<', 'v', '>']
-collision_cost = 1000
-success_prob = 0.5
+collision_cost = 100
+success_prob = 0.8
 FREE = 0
 
 
@@ -210,7 +210,7 @@ def dynamic_policy(_grid, _goal, _cost, _delta):
         for y in cols
             if x,y match with goals then mark value(x,y) as 0
             for k in delta
-                x2 -> delta(k)(0) and y2 -> delta(k)(0)
+                x2 -> x + delta(k)(0) and y2 -> y + delta(k)(0)
                 check:
                 1- x2, y2 are within grid
                 2- grid(x2)(y2) is free i.e. grid(x2)(y2) is 0
@@ -233,36 +233,36 @@ def dynamic_policy(_grid, _goal, _cost, _delta):
         _change = False
         # loop over each position in the grid
         # vertical loop
-        for _x in range(len(_grid)):
+        for row in range(len(_grid)):
             # horizontal loop
-            for _y in range(len(_grid[0])):
+            for col in range(len(_grid[0])):
                 # use debugger at this point to see how its proceeding
                 """
                 if we have reached on the goal position and value is larger. then assign it 0.
                 goal in dynamic programming is starting point
                 """
-                if _x is _goal[0] and _y is _goal[1]:
-                    if _value[_x][_y] > 0:
-                        _value[_x][_y] = 0
-                        _policy[_x][_y] = '*'
+                if row is _goal[0] and col is _goal[1]:
+                    if _value[row][col] > 0:
+                        _value[row][col] = 0
+                        _policy[row][col] = '*'
                         _change = True
-                elif _grid[_x][_y] is 0:
+                elif _grid[row][col] is 0:
                     """
                               (x2, y2) 0
                                   |      
-                    3 (x2,y2) -- x,y -- (x2,y2) 2            
+                    1 (x2,y2) -- x,y -- (x2,y2) 3            
                                   | 
-                              (x2, y2) 1
+                              (x2, y2) 2
                     
                     go through each of the position. check its not out of grid and grid position is not blocked
                     """
                     for _index in range(len(_delta)):
-                        _x2 = _x + _delta[_index][0]
-                        _y2 = _y + _delta[_index][1]
-                        _x_boundary = _x2 >= 0 and _x2 < len(_grid)
-                        _y_boundary = _y2 >= 0 and _y2 < len(_grid[0])
-                        if _x_boundary and _y_boundary and _grid[_x2][_y2] is 0:
-                            _v2 = _value[_x2][_y2] + _cost
+                        new_row = row + _delta[_index][0]
+                        new_col = col + _delta[_index][1]
+                        row_boundary = 0 <= new_row < len(_grid)
+                        col_boundary = 0 <= new_col < len(_grid[0])
+                        if row_boundary and col_boundary and _grid[new_row][new_col] is 0:
+                            new_value = _value[new_row][new_col] + _cost
                             """
                                 |   |                   |   |
                               __________             __________
@@ -270,16 +270,15 @@ def dynamic_policy(_grid, _goal, _cost, _delta):
                               __________             __________      
                                 | 99| 0                 | 1 | 0
                             """
-                            if _v2 < _value[_x][_y]:
-                                _value[_x][_y] = _v2
-                                _policy[_x][_y] = delta_name[_index]
+                            if new_value < _value[row][col]:
+                                _value[row][col] = new_value
+                                _policy[row][col] = delta_name[_index]
                                 _change = True
-    return [_value, _policy]
+    return _value, _policy
 
 
 def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_prob):
-    # initialize value with 1000
-    _value = [[1000 for row in range(len(_grid[0]))] for col in range(len(_grid))]
+    _value = [[_collision_cost for row in range(len(_grid[0]))] for col in range(len(_grid))]
     _policy = [[' ' for row in range(len(_grid[0]))] for col in range(len(_grid))]
     """
     failure probability
@@ -289,16 +288,16 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
     _change = True
     while _change is True:
         _change = False
-        for _x in range(len(_grid)):
-            for _y in range(len(_grid[0])):
-                if _x is _goal[0] and _y is _goal[1]:
-                    if _value[_x][_y] > 0:
-                        _value[_x][_y] = 0
-                        _policy[_x][_y] = '*'
+        for row in range(len(_grid)):
+            for col in range(len(_grid[0])):
+                if row is _goal[0] and col is _goal[1]:
+                    if _value[row][col] > 0:
+                        _value[row][col] = 0
+                        _policy[row][col] = '*'
                         _change = True
-                elif _grid[_x][_y] is FREE:
+                elif _grid[row][col] is FREE:
                     for _index in range(len(_delta)):
-                        _v2 = _cost
+                        new_value = _cost
                         """
                         for every move using delta,
                         there could be 3 possible movements because now movement is not exact
@@ -306,38 +305,38 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
                         """
                         for _stochastic_index in range(-1, 2):
                             """
-                            __index is one of the stochastic index
-                            for every __index get the location
+                            new_index is one of the stochastic index
+                            for every new_index get the location
                             and assign it the value based on where it is
                             so if stochastic index is 0 then its success probability else its failure
                             """
-                            __index = (_index + _stochastic_index) % len(_delta)
-                            _x2 = _x + _delta[__index][0]
-                            _y2 = _y + _delta[__index][1]
+                            new_index = (_index + _stochastic_index) % len(_delta)
+                            new_row = row + _delta[new_index][0]
+                            new_col = col + _delta[new_index][1]
                             if _stochastic_index is 0:
                                 _p = _success_prob
                             else:
                                 _p = _failure_prob
 
-                            _x_boundary = _x2 >= 0 and _x2 < len(_grid)
-                            _y_boundary = _y2 >= 0 and _y2 < len(_grid[0])
+                            row_boundary = 0 <= new_row < len(_grid)
+                            col_boundary = 0 <= new_col < len(_grid[0])
                             """
                             if it is within boundaries then no penalty 
                             if its hitting the wall i.e. going outside the boundary
                             then apply penalty
                             """
-                            if _x_boundary and _y_boundary and _grid[_x2][_y2] is FREE:
-                                _v2 += _value[_x2][_y2] * _p
+                            if row_boundary and col_boundary and _grid[new_row][new_col] is FREE:
+                                new_value += _value[new_row][new_col] * _p
                             else:
-                                _v2 += _collision_cost * _p
+                                new_value += _collision_cost * _p
                         """
                         update the value of the current position
                         """
-                        if _v2 < _value[_x][_y]:
-                            _value[_x][_y] = _v2
-                            _policy[_x][_y] = delta_name[_index]
+                        if new_value < _value[row][col]:
+                            _value[row][col] = new_value
+                            _policy[row][col] = delta_name[_index]
                             _change = True
-    return [_value, _policy]  # Taking in account the probability of Robot movement and Wall Hitting Penalty
+    return _value, _policy
 
 
 [g, x, y, action, expand] = search(grid,
