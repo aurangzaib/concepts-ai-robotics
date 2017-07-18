@@ -220,8 +220,24 @@ def perform_localization_nxn(_colors, _measurements, _motions, _s_right, _p_move
     return q
 
 
-q = perform_localization_nxn(colors_n_by_n,
-                             measurements_n_by_n,
-                             motions_nxn,
-                             sensor_right,
-                             p_move)
+# q = perform_localization_nxn(colors_n_by_n,
+#                              measurements_n_by_n,
+#                              motions_nxn,
+#                              sensor_right,
+#                              p_move)
+p = [1, 0, 1, 0]
+
+
+#  my algorithm
+# decreases entropy
+def move_algo_quiz(p, move_point):
+    q = []
+    for move_index in range(len(p)):
+        if move_index < move_point:
+            q.append(p[move_index - move_point])
+        else:
+            q.append(p[move_index])
+    return q
+
+
+print move_algo_quiz(p, 1)

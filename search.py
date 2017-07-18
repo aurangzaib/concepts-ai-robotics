@@ -1,7 +1,10 @@
+import numpy as np
+from random import choice
+from random import randint
 grid = [[0, 0, 1, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0],
-        [0, 0, 1, 0, 1, 0],
+        [0, 1, 1, 0, 1, 0],
         [0, 0, 1, 1, 1, 0]]
 # manhattan distance heuristic
 heuristic = [[9, 8, 7, 6, 5, 4],
@@ -103,12 +106,12 @@ def heuristic_search(grid, heuristic, init, goal, cost):
     so whenever it has choice between 2 options it will select one with smaller f value but A* method is not
     efficient when both options have same f values. try using 2nd col as: [0 1 1 1 1 1] instead of [0 1 1 1 1 1]
     and A* won't work  very well because there will be several options with same f values.
-    
+
     run with:
     grid = [[0, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 0], [0, 1, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]]
     and see how A* and normal expan grid method work
     expansion grid method will explore a lot of places.
-     
+
     A* is very good in real world where we have dead end obstacles.
     this grid based A* id different for real world cars as cars can turn at an angle.
     """
@@ -228,8 +231,8 @@ def dynamic_policy(_grid, _goal, _cost, _delta):
                         |   |                                   |   |
                       __________                             __________
                         |   | 99             --->               |   | 1
-                      __________                             __________      
-                        |   | 0                                 |   | 0             
+                      __________                             __________
+                        |   | 0                                 |   | 0
     """
     while _change is True:
         _change = False
@@ -251,11 +254,11 @@ def dynamic_policy(_grid, _goal, _cost, _delta):
                 elif _grid[row][col] is 0:
                     """
                               (x2, y2) 0
-                                  |      
-                    1 (x2,y2) -- x,y -- (x2,y2) 3            
-                                  | 
+                                  |
+                    1 (x2,y2) -- x,y -- (x2,y2) 3
+                                  |
                               (x2, y2) 2
-                    
+
                     go through each of the position. check its not out of grid and grid position is not blocked
                     """
                     for _index in range(len(_delta)):
@@ -269,7 +272,7 @@ def dynamic_policy(_grid, _goal, _cost, _delta):
                                 |   |                   |   |
                               __________             __________
                                 |   | 99     --->       |   | 1
-                              __________             __________      
+                              __________             __________
                                 | 99| 0                 | 1 | 0
                             """
                             if new_value < _value[row][col]:
@@ -284,7 +287,7 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
     _policy = [[' ' for row in range(len(_grid[0]))] for col in range(len(_grid))]
     """
     failure probability
-    divided in 2 parts because there can be 2 possible non-original moves 
+    divided in 2 parts because there can be 2 possible non-original moves
     """
     _failure_prob = (1.0 - _success_prob) / 2.0
     _change = True
@@ -315,17 +318,14 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
                             new_index = (_index + _stochastic_index) % len(_delta)
                             new_row = row + _delta[new_index][0]
                             new_col = col + _delta[new_index][1]
-                            if _stochastic_index is 0:
-                                _p = _success_prob
-                            else:
-                                _p = _failure_prob
+
+                            _p = _success_prob if _stochastic_index is 0 else _failure_prob
 
                             row_boundary = 0 <= new_row < len(_grid)
                             col_boundary = 0 <= new_col < len(_grid[0])
                             """
-                            if it is within boundaries then no penalty 
-                            if its hitting the wall i.e. going outside the boundary
-                            then apply penalty
+                            if it is within boundaries then no penalty
+                            if its hitting the wall i.e. going outside the boundary then apply penalty
                             """
                             if row_boundary and col_boundary and _grid[new_row][new_col] is FREE:
                                 new_value += _value[new_row][new_col] * _p
@@ -391,3 +391,24 @@ for _v in stochastic_value:
 print "\nstochastic policy: "
 for _v in stochastic_policy:
     print _v
+
+
+def monty_hall_problem():
+    my_door = randint(1, 3)
+    number_of_doors = 3
+    other_doors = range(1, my_door) + range(my_door + 1, number_of_doors + 1)
+    monty_door = choice(other_doors)
+    p_init = 1. / number_of_doors
+    p = [p_init for col in range(number_of_doors)]
+    for index in range(number_of_doors):
+        if index != (my_door - 1):
+            p[index] += (1 / float(number_of_doors))
+    p[monty_door - 1] = 0
+
+    print "my door: ", my_door
+    print "monty door: ", monty_door
+    return p.index(max(p)) + 1
+
+
+best_door = monty_hall_problem()
+print best_door, "has highest probability"

@@ -10,7 +10,6 @@ path_cyclic = [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0],
                [3, 3], [2, 3], [1, 3], [0, 3], [0, 2], [0, 1]]
 fix_points = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0]
 
-
 def smooth_gradient_descent(_path, weight_data=0.0, weight_smooth=0.1, tolerance=0.000001):
     _new_path = deepcopy(_path)
     _change = tolerance
@@ -23,7 +22,6 @@ def smooth_gradient_descent(_path, weight_data=0.0, weight_smooth=0.1, tolerance
         each time update the difference and store in change variable.
 
         the value of weight_data determines the smoothness of the edges
-    
         smaller the values the smoother the edges, tending towards straight line
         i.e. edges will have 0 angles for data_weight=0 i.e. straight line
     
@@ -291,7 +289,7 @@ x_pid, y_pid, err_pid = pid_controller(robot,
                                        params,
                                        number_of_steps)
 """
-twiddle --> Coordinate Ascent Method
+ - twiddle --> Coordinate Ascent Method
 
  - to further reduce the oscillation
  - we first optimize the params and then use the pid_controller
@@ -320,7 +318,7 @@ x_pid_race_track, y_pid_race_track, err_race_track = pid_controller_race_track(r
                                                                                params_race_track,
                                                                                number_of_steps)
 """
-notice in the output that:
+note in the output that:
     - p controller keeps oscillating around target
     - pd controller reduces the oscillation around target
     - systematic bias (steering drift) makes pd controller to oscillate around the cross track error
