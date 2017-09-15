@@ -67,63 +67,6 @@ def move_algo_with_inaccurate_movement_2(p, U):
 
 
 """
-    Limit Distribution:
-    if a robot keeps moving with 
-    the inaccuracy in its movements not
-    corrected, in the end it will be
-    on uniform distribution, called
-    state of maximal uncertainty.   
-    
-    at this point, robot doesn't know 
-    exactly where it is. it thinks 
-    it can be on any of the possible 
-    positions.
-"""
-
-
-# increasing the value of T
-# make the robot more uncertain
-# and the result will always tends
-# towards uniform distribution
-def perform_move_cycle():
-    q = p[:]
-    T = 10000
-    for index in range(T):
-        q = move_algo_with_inaccurate_movement(q, 1)
-
-
-"""
-    entropy: measure of info a distribution has
-    update(move)    --> loses entropy --> info decreases
-    measure(sense)  --> gains entropy --> info increases
-    
-          (sense - product - bayes rule)   -->   (move - convolution - total prob. theorem)
-                                           <--    
-                ^
-                |
-                |
-                |
-          (initial belief)
-    normally uniform distribution
-    
-    sense --> probability distribution, world values, current measurement, sensor right probability
-    move  --> probability distribution, motion, move probability
-"""
-
-
-def perform_localization(_measurements, _motions):
-    _p = [0.2, 0.2, 0.2, 0.2, 0.2]
-    q = _p[:]
-    for innerIndex in range(len(_motions)):
-        # measure
-        q = sense(q, _measurements[innerIndex])
-        # then move
-        q = move_algo_with_inaccurate_movement(q, _motions[innerIndex])
-    _p = q[:]
-    return _p
-
-
-"""
 LOCALIZATION -- NXN
 """
 
@@ -149,7 +92,7 @@ def sense_n_by_n(_p, _colors, _measurement, _sensor_right):
             _q[outer_index][inner_index] = _right if _condition else _wrong
             normalize_factor += _q[outer_index][inner_index]
     """
-    normalize the values so that 
+    normalize the values so that
     sum is always 1
     """
     for outer_index in range(len(_colors)):
@@ -164,7 +107,7 @@ def sense_n_by_n(_p, _colors, _measurement, _sensor_right):
 def move_n_by_n(_p, _motions, _p_move):
     _p_stay = 1. - _p_move
     """
-    initialize with 0 having same dimensions as p. 
+    initialize with 0 having same dimensions as p.
     deepcopy(p) could also be used
     """
     __q = [[0 for row in range(len(_p[0]))] for col in range(len(_p))]
@@ -197,6 +140,63 @@ def move_n_by_n(_p, _motions, _p_move):
     return __q
 
 
+"""
+    Limit Distribution:
+    if a robot keeps moving with
+    the inaccuracy in its movements not
+    corrected, in the end it will be
+    on uniform distribution, called
+    state of maximal uncertainty.
+
+    at this point, robot doesn't know
+    exactly where it is. it thinks
+    it can be on any of the possible
+    positions.
+"""
+
+
+# increasing the value of T
+# make the robot more uncertain
+# and the result will always tends
+# towards uniform distribution
+def perform_move_cycle():
+    q = p[:]
+    T = 10000
+    for index in range(T):
+        q = move_algo_with_inaccurate_movement(q, 1)
+
+
+"""
+    entropy: measure of info a distribution has
+    update(move)    --> loses entropy --> info decreases
+    measure(sense)  --> gains entropy --> info increases
+
+          (sense - product - bayes rule)   -->   (move - convolution - total prob. theorem)
+                                           <--
+                ^
+                |
+                |
+                |
+          (initial belief)
+    normally uniform distribution
+
+    sense --> probability distribution, world values, current measurement, sensor right probability
+    move  --> probability distribution, motion, move probability
+"""
+
+
+def perform_localization(_measurements, _motions):
+    _p = [0.2, 0.2, 0.2, 0.2, 0.2]
+    q = _p[:]
+    for innerIndex in range(len(_motions)):
+        # measure
+        q = sense(q, _measurements[innerIndex])
+        # then move
+        q = move_algo_with_inaccurate_movement(q, _motions[innerIndex])
+    _p = q[:]
+    return _p
+
+
 colors_n_by_n = [['R', 'G', 'G', 'R', 'R'],
                  ['R', 'R', 'G', 'R', 'R'],
                  ['R', 'R', 'G', 'G', 'R'],
@@ -216,7 +216,7 @@ def perform_localization_nxn(_colors, _measurements, _motions, _s_right, _p_move
         q = move_n_by_n(q, _motions[index], _p_move)
         q = sense_n_by_n(q, _colors, _measurements[index], _s_right)
     for _q in q:
-        print _q
+        print(_q)
     return q
 
 
@@ -240,4 +240,4 @@ def move_algo_quiz(p, move_point):
     return q
 
 
-print move_algo_quiz(p, 1)
+print(move_algo_quiz(p, 1))

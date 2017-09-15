@@ -87,7 +87,7 @@ def breadth_first_search(_grid, _delta, _init, _goal, _cost):
                             """
                             _action[new_row][new_col] = index
     if resign is True:
-        print 'Fail'
+        print ('Fail')
     elif found is True:
         return [g, row, col, _action, _expand]
     else:
@@ -165,7 +165,7 @@ def heuristic_search(grid, heuristic, init, goal, cost):
                             """
                             action[x2][y2] = index
     if resign is True:
-        print 'Fail'
+        print ('Fail')
     elif found is True:
         return [f, g, x, y, action, expand]
     else:
@@ -200,7 +200,7 @@ def trace_search(grid, init, goal, _action):
         col = new_col
 
     for _index in range(len(policy)):
-        print policy[_index]
+        print (policy[_index])
     return policy
 
 
@@ -365,32 +365,32 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
                                                           collision_cost,
                                                           success_prob)
 
-print "\nsearch value : "
+print ("\nsearch value : ")
 for _v in expand:
-    print _v
+    print (_v)
 
-print "\nheuristic value : "
+print ("\nheuristic value : ")
 for _e in a_expand:
-    print _e
+    print (_e)
 
-print "\nsearch policy: "
+print ("\nsearch policy: ")
 trace_search(grid, init, goal, action)
 
-print "\ndynamic value: "
+print ("\ndynamic value: ")
 for _v in dynamic_value:
-    print _v
+    print (_v)
 
-print "\ndynamic policy: "
+print ("\ndynamic policy: ")
 for _v in dynamic_policy:
-    print _v
+    print (_v)
 
-print "\nstochastic value: "
+print ("\nstochastic value: ")
 for _v in stochastic_value:
-    print _v
+    print (_v)
 
-print "\nstochastic policy: "
+print ("\nstochastic policy: ")
 for _v in stochastic_policy:
-    print _v
+    print (_v)
 
 
 def monty_hall_problem():
@@ -405,10 +405,10 @@ def monty_hall_problem():
             p[index] += (1 / float(number_of_doors))
     p[monty_door - 1] = 0
 
-    print "my door: ", my_door
-    print "monty door: ", monty_door
+    print ("my door: ", my_door)
+    print ("monty door: ", monty_door)
     return p.index(max(p)) + 1
 
 
 best_door = monty_hall_problem()
-print best_door, "has highest probability"
+print (best_door, "has highest probability")

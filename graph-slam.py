@@ -51,7 +51,7 @@ for index in range(len(mu_x)):
     mu.append(mu_y[index])
 
 for m in mu:
-    print m
+    print(m)
 
 
 def a():

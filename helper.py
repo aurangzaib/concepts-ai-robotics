@@ -23,8 +23,8 @@ def make_robot(_with_systematic_bias=True):
 
 def print_paths(path, _new_path):
     for old, new in zip(path, _new_path):
-        print '[' + ', '.join('%.3f' % x for x in old) + '] -> [' + ', '.join('%.3f' % x for x in new) + ']'
-    print
+        print('[' + ', '.join('%.3f' % x for x in old) + '] -> [' + ', '.join('%.3f' % x for x in new) + ']')
+    print()
 
 
 def plot_smoothing(_path,

@@ -11,46 +11,50 @@ class KalmanFilter(object):
 
     @staticmethod
     def one_dim__kalman_measurement_update(mean1, variance1, mean2, variance2):
+        """
+        measurement or sense
+        """
         new_mean = (mean1 * variance2 + mean2 * variance1) / (variance1 + variance2)  # weighted sum
         new_variance = 1.0 / ((1.0 / variance1) + (1.0 / variance2))
         return [new_mean, new_variance]
 
     @staticmethod
     def one_dim__kalman_prediction_update(mean1, variance1, motion_mean, motion_variance):
+        """
+        prediction or move
+        """
         new_mean = mean1 + motion_mean
         new_variance = variance1 + motion_variance
         return [new_mean, new_variance]
 
     @staticmethod
     def one_dim__kalman():
-        # initial condition
+        # initial condition, high variance --> uncertainty initially
         mean = 0.
-        variance = 10000.  # very high uncertainty initially
-        # mean measurement values
-        measurements = [5., 6., 7., 9., 10.]
-        # measurement variance
-        measurement_variance = 4.
-        # mean prediction values
-        predictions = [1., 1., 2., 1., 1.]
-        # prediction variance
-        prediction_variance = 2.
+        variance = 10000.
+        # measurement and prediction means
+        measurements, predictions = [5., 6., 7., 9., 10.], [1., 1., 2., 1., 1.]
+        # measurement and prediction variances
+        measurement_variance, prediction_variance = 4., 2.
 
-        for index in range(len(measurements)):
+        for measurement, prediction in zip(measurements, predictions):
+            # sense
             [mean, variance] = KalmanFilter.one_dim__kalman_measurement_update(mean,
                                                                                variance,
-                                                                               measurements[index],
+                                                                               measurement,
                                                                                measurement_variance)
+            # move
             [mean, variance] = KalmanFilter.one_dim__kalman_prediction_update(mean,
                                                                               variance,
-                                                                              predictions[index],
+                                                                              prediction,
                                                                               prediction_variance)
 
         # mean value always increases
         # uncertainty or confidence adjusts itself
-        print ("result:", [mean, variance])
+        print("result:", [mean, variance])
         """
         sensor only sees position and not the velocity
-        but using kalman filter, we infer the velocity 
+        but using kalman filter, we infer the velocity
         using the info from position and then it makes
         predictions for the future position
         """
@@ -90,8 +94,8 @@ class KalmanFilter(object):
         """
         printing estimates and confidence of kalman filter
         """
-        print 'estimation (x): \n', estimate_matrix
-        print 'prediction (P): \n', uncertainty_covariance
+        print('estimation (x): \n', estimate_matrix)
+        print('prediction (P): \n', uncertainty_covariance)
         """
         kalman filter now has predicted:
             the velocities and positions
@@ -135,7 +139,8 @@ I__4d = np.matrix('1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1')
 # measurements
 z__4d = [[0., 4.], [8., 0.], [16., -4.], [24., -8.]]
 
-KalmanFilter.multi_variant__kalman_filter(x__4d, P__4d,
-                                          u__4d, F__4d,
-                                          H__4d, R__4d,
-                                          I__4d, z__4d)
+KalmanFilter.one_dim__kalman()
+# KalmanFilter.multi_variant__kalman_filter(x__4d, P__4d,
+#                                           u__4d, F__4d,
+#                                           H__4d, R__4d,
+#                                           I__4d, z__4d)
