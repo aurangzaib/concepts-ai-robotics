@@ -52,12 +52,6 @@ class KalmanFilter(object):
         # mean value always increases
         # uncertainty or confidence adjusts itself
         print("result:", [mean, variance])
-        """
-        sensor only sees position and not the velocity
-        but using kalman filter, we infer the velocity
-        using the info from position and then it makes
-        predictions for the future position
-        """
 
     @staticmethod
     def multi_variant__kalman_filter(estimate_matrix,  # x
@@ -69,21 +63,27 @@ class KalmanFilter(object):
                                      identity_matrix,  # I
                                      measurements  # z
                                      ):
+        """
+        sensor only sees position and not the velocity
+        but using kalman filter, we infer the velocity
+        using the info from position and then it makes
+        predictions for the future position
+        """
         for index in range(len(measurements)):
             # move -- prediction step
             """
             x' = F*x + u
-            P'  = F*P*Ft
+            P'  = F*P*F_t
             """
             estimate_matrix = (state_transition_matrix * estimate_matrix) + motion_vector
             uncertainty_covariance = state_transition_matrix * uncertainty_covariance * state_transition_matrix.getT()
             # sense -- measurement step
             """
-            y = zt - H*x
-            S = H * P * Ht + R
-            K = P * Ht * inv(S)
+            y = z_t - H*x
+            S = H * P * H_t + R
+            K = P * H_t * inv(S)
             x' = x + K*y
-            P' = I - K*H * P
+            P' = (I - K*H) * P
             """
             z_t = np.matrix([measurements[index]])
             measurement = z_t.transpose() - (measurement_function * estimate_matrix)
@@ -94,8 +94,9 @@ class KalmanFilter(object):
         """
         printing estimates and confidence of kalman filter
         """
-        print('estimation (x): \n', estimate_matrix)
-        print('prediction (P): \n', uncertainty_covariance)
+        print('estimation (x): \n', estimate_matrix)  # x_pos, x_vel, y_pos, y_vel
+        print('prediction (P): \n', uncertainty_covariance)  # uncertainties of x and y pos and vel
+        print()
         """
         kalman filter now has predicted:
             the velocities and positions
@@ -104,22 +105,26 @@ class KalmanFilter(object):
         return estimate_matrix, uncertainty_covariance
 
 
-x = np.matrix('0.;0.')  # estimate matrix
+x = np.matrix('0.;0.')  # estimate matrix --> x_pos, y_vel
 P = np.matrix('1000. 0.;0. 1000.')  # uncertainty covariance
-u = np.matrix('0.; 0.')  # motion vector
+u = np.matrix('0.; 0.')  # motion vector --> external force
 F = np.matrix('1. 1. ; 0. 1.')  # state transition matrix
-H = np.matrix('1. 0.')  # measurement function
+H = np.matrix('1. 0.')  # measurement function --> x_pos observable, x_vel not-observable
 R = np.matrix('1.')  # measurement noise
 I = np.matrix('1. 0. ; 0. 1.')  # identity matrix
 z = [1, 2, 3]  # measurements
 
-# KalmanFilter.multi_variant__one_dimension_kalman_filter(x, P,u, F, H, R, I, z)
+KalmanFilter.multi_variant__kalman_filter(x, P, u, F, H, R, I, z)
 
 # 4 dimensional space: x and y, x_dot and y_dot
 dt = 0.1
 initial_xy = [-8., 8.]
 # initial state vector; both velocities are zero initially
-x__4d = np.matrix([[initial_xy[0]], [initial_xy[1]], [0.], [0.]])
+x__4d = np.matrix([[initial_xy[0]],  # x pos
+                   [initial_xy[1]],  # x vel
+                   [0.],  # y pos
+                   [0.]]  # y vel
+                  )
 # uncertainty covariance matrix; high certainty for positions
 # low certainty for velocities
 # diagonal elements represent uncertainties, other elements are zero always
@@ -136,11 +141,10 @@ H__4d = np.matrix('1. 0 0 0; 0 1. 0 0')
 R__4d = np.matrix('0.1 0; 0 0.1')
 # identity matrix
 I__4d = np.matrix('1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1')
-# measurements
+# measurements --> x and y positions
 z__4d = [[0., 4.], [8., 0.], [16., -4.], [24., -8.]]
 
-KalmanFilter.one_dim__kalman()
-# KalmanFilter.multi_variant__kalman_filter(x__4d, P__4d,
-#                                           u__4d, F__4d,
-#                                           H__4d, R__4d,
-#                                           I__4d, z__4d)
+KalmanFilter.multi_variant__kalman_filter(x__4d, P__4d,
+                                          u__4d, F__4d,
+                                          H__4d, R__4d,
+                                          I__4d, z__4d)

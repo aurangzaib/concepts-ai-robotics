@@ -8,9 +8,24 @@ world = ['green', 'green', 'red', 'green', 'red']
 measurements = ['red']
 motions = [1, 1]
 
+"""
+when a robot moves   -- prediction  -- entropy decreases
+when a robots senses -- measurement -- entropy increases
+
+Limit Distribution:
+if a robot keeps moving with
+the inaccuracy in its movements not
+corrected, in the end it will be
+on uniform distribution, called
+state of maximal uncertainty.
+at this point, robot doesn't know
+exactly where it is. it thinks
+it can be on any of the possible
+positions.
+"""
+
 
 # sense function
-# increases entropy
 def sense(_p, measurement):
     q = []
     for sense_index in range(len(_p)):
@@ -22,18 +37,10 @@ def sense(_p, measurement):
     return q
 
 
-#  algorithm from sebastian
-# decreases entropy
-def move_algo_1(_p, _U):
-    q = []
-    for move_index in range(len(_p)):
-        q.append(_p[(move_index - _U) % len(_p)])
-    return q
-
-
-#  my algorithm
-# decreases entropy
-def move_algo_2(p, move_point):
+def move(p, move_point):
+    """
+    move in vector
+    """
     q = [None] * len(p)
     for _index in range(len(p)):
         q[move_point] = (p[_index])
@@ -41,9 +48,12 @@ def move_algo_2(p, move_point):
     return q
 
 
-# my algorithm
-def move_algo_with_inaccurate_movement(p, move_point, p_exact=0.8, p_undershoot=0.1, p_overshoot=0.1):
-    q = [None] * len(p)
+def move_inaccurate(p, move_point, p_exact=0.8, p_undershoot=0.1, p_overshoot=0.1):
+    """
+    move with overshoot and undershoot
+    robot will move always. but may not desired location
+    """
+    q = [None] * len(p)  # q = [None for row in range(len(p))]
     for _index in range(len(p)):
         q[move_point] = (p[_index]) * p_exact
         q[move_point] += (p[(_index + 1) % len(p)]) * p_undershoot
@@ -52,17 +62,18 @@ def move_algo_with_inaccurate_movement(p, move_point, p_exact=0.8, p_undershoot=
     return q
 
 
-# sebastian algorithm
-# decreases entropy
-def move_algo_with_inaccurate_movement_2(p, U):
-    q = []
+def move_stochastic(p, move_point, p_move):
+    """
+    there is possibility that robot may not move at all
+    """
+    p_stay = 1. - p_move
+    q = [None] * len(p)
+    move_point = move_point % len(p)
     for index in range(len(p)):
-        # adjust inaccurate robot movement
-        value_exact = p[(index - U) % len(p)] * pExact  # current position
-        value_overshoot = p[(index - U - 1) % len(p)] * pOvershoot  # previous position
-        value_undershoot = p[(index - U + 1) % len(p)] * pUndershoot  # next position
-
-        q.append(value_exact + value_overshoot + value_undershoot)
+        move = p[index] * p_move
+        stay = p[move_point] * p_stay
+        q[move] = move + stay
+        move_point = (move_point + 1) % len(p)
     return q
 
 
@@ -71,7 +82,7 @@ LOCALIZATION -- NXN
 """
 
 
-def sense_n_by_n(_p, _colors, _measurement, _sensor_right):
+def sense_nxn(_p, _colors, _measurement, _sensor_right):
     _sensor_wrong = 1. - _sensor_right
     """
     sensor_right --> pHit
@@ -104,55 +115,25 @@ def sense_n_by_n(_p, _colors, _measurement, _sensor_right):
     return _q
 
 
-def move_n_by_n(_p, _motions, _p_move):
-    _p_stay = 1. - _p_move
-    """
-    initialize with 0 having same dimensions as p.
-    deepcopy(p) could also be used
-    """
-    __q = [[0 for row in range(len(_p[0]))] for col in range(len(_p))]
-    """
-    handling cyclic index case
-    user may have given wrong value to be moved
-    """
-    move_row = _motions[0] % len(_p)
-    move_col = _motions[1] % len(_p[0])
-    for index_row in range(len(_p)):
-        for index_col in range(len(_p[0])):
-            """
-            probabilities that the robot moved and not moved
-            e.g. p[0][0] copied to q[0][1]
-            """
-            move_value = _p[index_row][index_col] * _p_move
-            not_move_value = _p[move_row][move_col] * _p_stay
-            """
-            __q now have prob of moved and not_moved
-            """
-            __q[move_row][move_col] = move_value + not_move_value
-            """
-            increment x index
-            """
-            move_col = (move_col + 1) % len(_p[0])
-        """
-        increment y index
-        """
-        move_row = (move_row + 1) % len(_p)
-    return __q
-
-
-"""
-    Limit Distribution:
-    if a robot keeps moving with
-    the inaccuracy in its movements not
-    corrected, in the end it will be
-    on uniform distribution, called
-    state of maximal uncertainty.
-
-    at this point, robot doesn't know
-    exactly where it is. it thinks
-    it can be on any of the possible
-    positions.
-"""
+def move_nxn(_p, _motions, _p_move=0.8):
+    p_stay = 1.0 - p_move
+    # initialize q with 0s with same dimensions as p
+    q = [[0 for col in range(len(p[0]))] for row in range(len(p))]
+    # handle boundary cases
+    ur, uc = _motions[0] % len(p), _motions[1] % len(p[0])
+    for r in range(len(p)):
+        for c in range(len(_p[0])):
+            # robot moved
+            move = _p[r][c] * p_move
+            # robot not moved
+            stay = _p[ur][uc] * p_stay
+            # combined probability
+            q[ur][uc] = move + stay
+            # next col
+            uc = (uc + 1) % len(_p[0])
+        # next row
+        ur = (ur + 1) % len(p)
+    return q
 
 
 # increasing the value of T
@@ -163,7 +144,7 @@ def perform_move_cycle():
     q = p[:]
     T = 10000
     for index in range(T):
-        q = move_algo_with_inaccurate_movement(q, 1)
+        q = move_inaccurate(q, 1)
 
 
 """
@@ -192,7 +173,7 @@ def perform_localization(_measurements, _motions):
         # measure
         q = sense(q, _measurements[innerIndex])
         # then move
-        q = move_algo_with_inaccurate_movement(q, _motions[innerIndex])
+        q = move_inaccurate(q, _motions[innerIndex])
     _p = q[:]
     return _p
 
@@ -213,8 +194,8 @@ def perform_localization_nxn(_colors, _measurements, _motions, _s_right, _p_move
     p_init = 1.0 / float(len(_colors) * len(_colors[0]))
     q = [[p_init for row in range(len(_colors[0]))] for col in range(len(_colors))]
     for index in range(len(_measurements)):
-        q = move_n_by_n(q, _motions[index], _p_move)
-        q = sense_n_by_n(q, _colors, _measurements[index], _s_right)
+        q = move_nxn(q, _motions[index], _p_move)
+        q = sense_nxn(q, _colors, _measurements[index], _s_right)
     for _q in q:
         print(_q)
     return q
@@ -225,8 +206,6 @@ def perform_localization_nxn(_colors, _measurements, _motions, _s_right, _p_move
 #                              motions_nxn,
 #                              sensor_right,
 #                              p_move)
-p = [1, 0, 1, 0]
-
 
 #  my algorithm
 # decreases entropy
@@ -240,4 +219,8 @@ def move_algo_quiz(p, move_point):
     return q
 
 
-print(move_algo_quiz(p, 1))
+p = [1, 0, 1, 0]
+print(move_inaccurate(p, 2))
+
+p = [[1, 0, 0], [0, 1, 1], [1, 1, 1]]
+print(move_nxn(p, [1, 1]))

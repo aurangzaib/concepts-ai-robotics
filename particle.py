@@ -14,14 +14,14 @@ def reverse_sort():
             if orig_prob[index] >= new_prob[inner_index]:
                 particles[inner_index] = new_array[index]
                 break
-    print "particles: ", particles
+    print("particles: ", particles)
 
 
 # re-sampling wheel algorithm
 def re_sample_wheel(iteration=1):
     number_of_samples = 1000
-    w = []
-    p = []
+    # weights and probabilities
+    w, p = [], []
     p3 = []
     for i in range(iteration):
         for _i in range(number_of_samples):
@@ -40,6 +40,8 @@ def re_sample_wheel(iteration=1):
                 sample_index = (sample_index + 1) % number_of_samples
                 # '% number_of_samples' -> keeps the array reference from going out of bounds
             p3.append(p[sample_index])
-    print "p3: ", p3
+    print("p3: ", p3)
 
-re_sample_wheel(2)
+
+reverse_sort()
+# re_sample_wheel(2)
