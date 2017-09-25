@@ -1,6 +1,6 @@
-import numpy as np
 from random import choice
 from random import randint
+
 grid = [[0, 0, 1, 0, 1, 0],
         [0, 1, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0],
@@ -37,16 +37,13 @@ FREE = 0
 # Breadth First Planning
 def breadth_first_search(_grid, _delta, _init, _goal, _cost):
     # initialize closed with zeros having same dimensions as grid
-    _closed = [[0 for row in range(len(_grid[0]))] for col in range(len(_grid))]
-    _expand = [[-1 for row in range(len(_grid[0]))] for col in range(len(_grid))]
-    _action = [[-1 for row in range(len(_grid[0]))] for col in range(len(_grid))]
-    _init[0] = 0
-    _init[1] = 0
-    row = _init[0]
-    col = _init[1]
-    g = 0
+    _closed = [[0 for col in range(len(_grid[0]))] for row in range(len(_grid))]
+    _expand = [[-1 for col in range(len(_grid[0]))] for row in range(len(_grid))]
+    _action = [[-1 for col in range(len(_grid[0]))] for row in range(len(_grid))]
+    _init[0], _init[1] = 0, 0
+    g, row, col = 0, _init[0], _init[1]
     _closed[_init[0]][_init[1]] = 1
-    # note that g is 0th element. because its the criteria for sorting
+    # note that g is 0th element. g is the criteria for sorting
     _open = [[g, row, col]]
     count = 0
     resign = False
@@ -55,14 +52,15 @@ def breadth_first_search(_grid, _delta, _init, _goal, _cost):
         if len(_open) is 0:
             resign = True
         else:
+            # remove the element with lowest g value
             _open.sort()
             _open.reverse()
-            _next = _open.pop()  # remove the element with lowest g value
-            g = _next[0]
-            row = _next[1]
-            col = _next[2]
+            _next = _open.pop()
+
+            g, row, col = _next[0], _next[1], _next[2]
             _expand[row][col] = count
             count += 1
+
             if _goal[0] is row and _goal[1] is col:
                 found = True
             else:
@@ -81,13 +79,13 @@ def breadth_first_search(_grid, _delta, _init, _goal, _cost):
                             _closed[new_row][new_col] = 1
                             """
                             saving which action from delta is performed used when tracing the policy
-                            (x2,y2) are used instead of (x,y)
+                            (x2, y2) are used instead of (x, y)
                             (x, y) are values of all possible tried combinations
                             (x2, y2) are values of the combination we used in the end
                             """
                             _action[new_row][new_col] = index
     if resign is True:
-        print ('Fail')
+        print('Fail')
     elif found is True:
         return [g, row, col, _action, _expand]
     else:
@@ -96,35 +94,34 @@ def breadth_first_search(_grid, _delta, _init, _goal, _cost):
 
 # A* Planning
 def heuristic_search(grid, heuristic, init, goal, cost):
-    # initialize with same dimensions as grid
-    closed = [[0 for row in range(len(grid[0]))] for col in range(len(grid))]
-    expand = [[-1 for row in range(len(grid[0]))] for col in range(len(grid))]
-    action = [[-1 for row in range(len(grid[0]))] for col in range(len(grid))]
     """
     A* method can reduce number of expanded nodes by calculating the new f value
     f = g + h(x,y)
     so whenever it has choice between 2 options it will select one with smaller f value but A* method is not
     efficient when both options have same f values. try using 2nd col as: [0 1 1 1 1 1] instead of [0 1 1 1 1 1]
-    and A* won't work  very well because there will be several options with same f values.
+    and A* won't work very well as there will be several options with same f values.
 
     run with:
     grid = [[0, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 0], [0, 1, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]]
-    and see how A* and normal expan grid method work
-    expansion grid method will explore a lot of places.
+    and see how A* and breadth-first methods work
+    breadth-first method will explore a lot of places hence high value of expand.
 
     A* is very good in real world where we have dead end obstacles.
-    this grid based A* id different for real world cars as cars can turn at an angle.
+    this grid based A* is different for real world cars as cars can turn at an angle.
     """
-    init[0] = 0
-    init[1] = 0
-    x = init[0]
-    y = init[1]
-    g = 0
-    h = heuristic[x][y]
+    # initialize with same dimensions as grid
+    closed = [[0 for col in range(len(grid[0]))] for row in range(len(grid))]
+    expand = [[-1 for col in range(len(grid[0]))] for row in range(len(grid))]
+    action = [[-1 for col in range(len(grid[0]))] for row in range(len(grid))]
+
+    init[0], init[1] = 0, 0
+    g, row, col = 0, init[0], init[1]
+    h = heuristic[row][col]
     f = g + h
+
+    # note that f is 0th element. f is the criteria for sorting
     closed[init[0]][init[1]] = 1
-    # note that f is 0th element. because its the criteria for sorting
-    open = [[f, g, x, y]]
+    open = [[f, g, row, col]]
     count = 0
     resign = False
     found = False
@@ -135,13 +132,12 @@ def heuristic_search(grid, heuristic, init, goal, cost):
             open.sort()
             open.reverse()
             _next = open.pop()  # remove the element with lowest f value
-            f = _next[0]
-            g = _next[1]
-            x = _next[2]
-            y = _next[3]
-            expand[x][y] = count
+
+            f, g, row, col = _next[0], _next[1], _next[2], _next[3]
+            expand[row][col] = count
             count += 1
-            if goal[0] is x and goal[1] is y:
+
+            if goal[0] is row and goal[1] is col:
                 found = True
             else:
                 for index in range(len(delta)):
@@ -149,8 +145,8 @@ def heuristic_search(grid, heuristic, init, goal, cost):
                     move forward to the next location
                     and get x,y of the expanded node
                     """
-                    x2 = x + delta[index][0]
-                    y2 = y + delta[index][1]
+                    x2 = row + delta[index][0]
+                    y2 = col + delta[index][1]
                     if 0 <= x2 < len(grid) and 0 <= y2 < len(grid[0]):
                         if closed[x2][y2] is FREE and grid[x2][y2] is FREE:
                             g2 = g + cost
@@ -165,42 +161,41 @@ def heuristic_search(grid, heuristic, init, goal, cost):
                             """
                             action[x2][y2] = index
     if resign is True:
-        print ('Fail')
+        print('Fail')
     elif found is True:
-        return [f, g, x, y, action, expand]
+        return [f, g, row, col, action, expand]
     else:
         return 'Unknown Error'
 
 
+# Trace the path created by Breadth First Planning
 def trace_search(grid, init, goal, _action):
-    policy = [[' ' for row in range(len(grid[0]))] for col in range(len(grid))]
-    # mark the goal coordinates as *
-    row = goal[0]
-    col = goal[1]
+    """
+    mark the goal coordinates as *
+
+    we took next positions when using search algorithm:
+        x2 = x + delta(index)(0); y2 = y + delta(index)(1)
+
+    here we will go in reverse direction and perform the recursion:
+        x2 = x - delta(action(x)(y))(0); y2 = y - delta(action(x)(y))(1)
+
+    where x2,y2 are original coord.; x,y are current coord.
+
+    then we draw the character based on which action was performed
+    action[x][y] is the index from delta and every delta element has its assoc. character in the delta_name vector
+
+    then save updated x, y with x2, y2 i.e. recursion
+    """
+    policy = [[' ' for col in range(len(grid[0]))] for row in range(len(grid))]
+    row, col = goal[0], goal[1]
     policy[row][col] = '*'
     while row != init[0] or col != init[1]:
-        """
-        we took next positions when running find policy(path) algorithm as:
-            x2 = x + delta(index)(0); y2 = y + delta(index)(1)
-        here we will go in reverse direction and perform the recursion
-            x2 = x - delta(action(x)(y))(0); y2 = y - delta(action(x)(y))(1)
-        where x2,y2 are original coord.; x,y are current coord.
-        """
         new_row = row - delta[_action[row][col]][0]
         new_col = col - delta[_action[row][col]][1]
-        """
-        now we will draw the character based on which action was performed
-        action[x][y] is the index from delta and every delta element has its assoc. character in the delta_name vector
-        """
         policy[new_row][new_col] = delta_name[_action[row][col]]
-        """
-        now save update x, y with x2, y2; recursion
-        """
-        row = new_row
-        col = new_col
-
-    for _index in range(len(policy)):
-        print (policy[_index])
+        row, col = new_row, new_col
+    for p in policy:
+        print(p)
     return policy
 
 
@@ -342,10 +337,10 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
 
 
 [g, x, y, action, expand] = breadth_first_search(grid,
-                                   delta,
-                                   init,
-                                   goal,
-                                   cost)
+                                                 delta,
+                                                 init,
+                                                 goal,
+                                                 cost)
 
 [a_f, a_g, a_x, a_y, a_action, a_expand] = heuristic_search(grid,
                                                             heuristic,
@@ -365,32 +360,32 @@ def stochastic_policy(_grid, _goal, _cost, _delta, _collision_cost, _success_pro
                                                           collision_cost,
                                                           success_prob)
 
-print ("\nsearch value : ")
+print("\nsearch value : ")
 for _v in expand:
-    print (_v)
+    print(_v)
 
-print ("\nheuristic value : ")
+print("\nheuristic value : ")
 for _e in a_expand:
-    print (_e)
+    print(_e)
 
-print ("\nsearch policy: ")
+print("\nsearch policy: ")
 trace_search(grid, init, goal, action)
 
-print ("\ndynamic value: ")
+print("\ndynamic value: ")
 for _v in dynamic_value:
-    print (_v)
+    print(_v)
 
-print ("\ndynamic policy: ")
+print("\ndynamic policy: ")
 for _v in dynamic_policy:
-    print (_v)
+    print(_v)
 
-print ("\nstochastic value: ")
+print("\nstochastic value: ")
 for _v in stochastic_value:
-    print (_v)
+    print(_v)
 
-print ("\nstochastic policy: ")
+print("\nstochastic policy: ")
 for _v in stochastic_policy:
-    print (_v)
+    print(_v)
 
 
 def monty_hall_problem():
@@ -405,10 +400,10 @@ def monty_hall_problem():
             p[index] += (1 / float(number_of_doors))
     p[monty_door - 1] = 0
 
-    print ("my door: ", my_door)
-    print ("monty door: ", monty_door)
+    print("my door: ", my_door)
+    print("monty door: ", monty_door)
     return p.index(max(p)) + 1
 
 
 best_door = monty_hall_problem()
-print (best_door, "has highest probability")
+print(best_door, "has highest probability")
