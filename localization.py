@@ -36,9 +36,9 @@ class Localization:
     def move_overshoot(p, move_point, p_exact=0.8, p_undershoot=0.1, p_overshoot=0.1):
         """
         move with overshoot and undershoot
-        robot will move always. but may not desired location
+        robot will move always. but may not to desired location
         """
-        q = [None] * len(p)  # q = [None for row in range(len(p))]
+        q = [None for row in range(len(p))]
         for _index in range(len(p)):
             q[move_point] = (p[_index]) * p_exact
             q[move_point] += (p[(_index + 1) % len(p)]) * p_undershoot
@@ -52,12 +52,12 @@ class Localization:
         there is possibility that robot may not move at all
         """
         p_stay = 1. - p_move
-        q = [None] * len(p)
+        q = [None for row in range(len(p))]
         move_point = move_point % len(p)
         for index in range(len(p)):
             move = p[index] * p_move
             stay = p[move_point] * p_stay
-            q[move] = move + stay
+            q[move_point] = move + stay
             move_point = (move_point + 1) % len(p)
         return q
 
@@ -105,7 +105,7 @@ class Localization:
         sensor_right --> pHit
         sensor_wrong --> pMiss
         """
-        _q = [[0 for row in range(len(_p[0]))] for col in range(len(_p))]
+        q = [[0 for row in range(len(_p[0]))] for col in range(len(_p))]
         normalize_factor = 0.0
         """
         find probabilities of each cell
@@ -113,44 +113,46 @@ class Localization:
         """
         for outer_index in range(len(_colors)):
             for inner_index in range(len(_colors[0])):
-                _condition = _colors[outer_index][inner_index] is _measurement
-                _right = _p[outer_index][inner_index] * _sensor_right
-                _wrong = _p[outer_index][inner_index] * _sensor_wrong
+                condition = _colors[outer_index][inner_index] is _measurement
+                right = _p[outer_index][inner_index] * _sensor_right
+                wrong = _p[outer_index][inner_index] * _sensor_wrong
 
-                _q[outer_index][inner_index] = _right if _condition else _wrong
-                normalize_factor += _q[outer_index][inner_index]
+                q[outer_index][inner_index] = right if condition else wrong
+                normalize_factor += q[outer_index][inner_index]
         """
         normalize the values so that
         sum is always 1
         """
         for outer_index in range(len(_colors)):
             for inner_index in range(len(_colors[0])):
-                _q[outer_index][inner_index] /= normalize_factor
+                q[outer_index][inner_index] /= normalize_factor
         """
         return the computed probabilities
         """
-        return _q
+        return q
 
     @staticmethod
     def localize(_measurements, world_values, _motions):
         p = [0.2, 0.2, 0.2, 0.2, 0.2]
         q = p[:]
         for innerIndex in range(len(_motions)):
-            # measure
+            # measure -- sense
             q = Localization.sense(q, world_values, _measurements[innerIndex])
-            # then move
+            # predict -- move
             q = Localization.move_overshoot(q, _motions[innerIndex])
         p = q[:]
         return p
 
     @staticmethod
     def localize_nxn(_colors, _measurements, _motions, _s_right, _p_move):
-        # generating uniform distribution
+        # uniform distribution
         p_init = 1.0 / float(len(_colors) * len(_colors[0]))
         q = [[p_init for col in range(len(_colors[0]))] for row in range(len(_colors))]
-        for index in range(len(_measurements)):
-            q = Localization.move_nxn(q, _motions[index], _p_move)
-            q = Localization.sense_nxn(q, _colors, _measurements[index], _s_right)
+        for motion, measurement in zip(_motions, _measurements):
+            # predict
+            q = Localization.move_nxn(q, motion, _p_move)
+            # measure
+            q = Localization.sense_nxn(q, _colors, measurement, _s_right)
         for _q in q:
             print(_q)
         return q
@@ -164,8 +166,8 @@ class Localization:
         towards uniform distribution
         """
         q = p[:]
-        T = 10000
-        for index in range(T):
+        cycles = 10000
+        for index in range(cycles):
             q = Localization.move_overshoot(q, 1)
 
 
@@ -183,8 +185,8 @@ motions_nxn = [[0, 0], [0, 1], [1, 0], [1, 0], [0, 1]]
 sensor_right = .7
 p_move = .8
 
-q = Localization.localize_nxn(colors_n_by_n,
-                              measurements_n_by_n,
-                              motions_nxn,
-                              sensor_right,
-                              p_move)
+_q_ = Localization.localize_nxn(colors_n_by_n,
+                                measurements_n_by_n,
+                                motions_nxn,
+                                sensor_right,
+                                p_move)
