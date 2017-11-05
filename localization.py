@@ -38,9 +38,10 @@ class Localization:
         move with overshoot and undershoot
         robot will move always. but may not to desired location
         """
-        q = [None for row in range(len(p))]
+        q = [0 for col in range(len(p))]
+        move_point = move_point % len(p)
         for _index in range(len(p)):
-            q[move_point] = (p[_index]) * p_exact
+            q[move_point] += (p[_index]) * p_exact
             q[move_point] += (p[(_index + 1) % len(p)]) * p_undershoot
             q[move_point] += (p[(_index - 1) % len(p)]) * p_overshoot
             move_point = (move_point + 1) % len(p)
@@ -83,23 +84,23 @@ class Localization:
         return q
 
     @staticmethod
-    def sense(p, world_values, measurement, p_hit=0.9):
+    def sense(p, world_map, sensor_data, p_hit=0.9):
         """
         we compare the sensor measurement value with the world values
         if sensor measurement measurement
         """
-        q = []
+        q = [0 for col in range(len(p))]
         p_miss = 1. - p_hit
         for i in range(len(p)):
-            value = p[i] * p_hit if (world_values[i] is measurement) else p[i] * p_miss
-            q.append(value)
+            hit_condition = world_map[i] is sensor_data
+            q[i] = p[i] * p_hit if hit_condition else p[i] * p_miss
         normalizer = sum(q)
         for index in range(len(q)):
             q[index] /= normalizer
         return q
 
     @staticmethod
-    def sense_nxn(_p, _colors, _measurement, _sensor_right):
+    def sense_nxn(_p, world_map, sensor_data, _sensor_right):
         _sensor_wrong = 1. - _sensor_right
         """
         sensor_right --> pHit
@@ -111,21 +112,21 @@ class Localization:
         find probabilities of each cell
         based on measurements given
         """
-        for outer_index in range(len(_colors)):
-            for inner_index in range(len(_colors[0])):
-                condition = _colors[outer_index][inner_index] is _measurement
-                right = _p[outer_index][inner_index] * _sensor_right
-                wrong = _p[outer_index][inner_index] * _sensor_wrong
+        for row in range(len(world_map)):
+            for col in range(len(world_map[0])):
+                condition = world_map[row][col] is sensor_data
+                right = _p[row][col] * _sensor_right
+                wrong = _p[row][col] * _sensor_wrong
 
-                q[outer_index][inner_index] = right if condition else wrong
-                normalize_factor += q[outer_index][inner_index]
+                q[row][col] = right if condition else wrong
+            normalize_factor += sum(q[row])
         """
         normalize the values so that
         sum is always 1
         """
-        for outer_index in range(len(_colors)):
-            for inner_index in range(len(_colors[0])):
-                q[outer_index][inner_index] /= normalize_factor
+        for row in range(len(world_map)):
+            for col in range(len(world_map[0])):
+                q[row][col] /= normalize_factor
         """
         return the computed probabilities
         """
@@ -135,17 +136,26 @@ class Localization:
     def localize(_measurements, world_values, _motions):
         p = [0.2, 0.2, 0.2, 0.2, 0.2]
         q = p[:]
-        for innerIndex in range(len(_motions)):
+        for index in range(len(_motions)):
             # measure -- sense
-            q = Localization.sense(q, world_values, _measurements[innerIndex])
+            q = Localization.sense(q, world_values, _measurements[index])
             # predict -- move
-            q = Localization.move_overshoot(q, _motions[innerIndex])
+            q = Localization.move_overshoot(q, _motions[index])
         p = q[:]
         return p
 
     @staticmethod
     def localize_nxn(_colors, _measurements, _motions, _s_right, _p_move):
-        # uniform distribution
+        """
+        motions is a list of tuples of x, y motions
+        colors is a matrix of world map
+        measurement is a list of sensor data
+        s_right is a float
+        p_move is a float
+        q is a matrix with same dimension as colors matrix
+        """
+
+        # starting from uniform/limit distribution
         p_init = 1.0 / float(len(_colors) * len(_colors[0]))
         q = [[p_init for col in range(len(_colors[0]))] for row in range(len(_colors))]
         for motion, measurement in zip(_motions, _measurements):
