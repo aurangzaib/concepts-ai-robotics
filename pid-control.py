@@ -10,185 +10,150 @@ path_cyclic = [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0],
                [3, 3], [2, 3], [1, 3], [0, 3], [0, 2], [0, 1]]
 fix_points = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0]
 
-def smooth_gradient_descent(_path, weight_data=0.0, weight_smooth=0.1, tolerance=0.000001):
-    _new_path = deepcopy(_path)
-    _change = tolerance
-    # keep iterating until change is smaller than the tolerance
-    while _change >= tolerance:
-        # set change to 0
-        _change = 0.
-        """
-        loop over each path on (i,j) and apply gradient descent equations.
-        each time update the difference and store in change variable.
 
-        the value of weight_data determines the smoothness of the edges
-        smaller the values the smoother the edges, tending towards straight line
-        i.e. edges will have 0 angles for data_weight=0 i.e. straight line
-    
-        the larger the values the sharper the edges
-        on data_weight=1 we will have 90 degree edges
-        """
-        for row in range(1, len(_new_path) - 1):
-            for col in range(len(_new_path[0])):
-                # values before updates
-                _old_value = _new_path[row][col]
-                # gradient and descent equations
-                _gradient = _path[row][col] - _new_path[row][col]
-                _descent = _new_path[row + 1][col] + _new_path[row - 1][col] - (2. * _new_path[row][col])
-                # save results of the equations
-                _new_path[row][col] += weight_data * _gradient + weight_smooth * _descent
-                # compare the outcomes of the gradient and descent results
-                _change += abs(_new_path[row][col] - _old_value)
-    return _new_path
+def smooth_gradient_descent(opath, alpha=0.0, beta=0.1, tolerance=0.000001):
+    """
+    loop over each path on (i,j) and apply gradient descent equations.
+    each time update the difference and store in change variable.
+
+    the value of weight_data determines the smoothness of the edges
+    smaller the values the smoother the edges, tending towards straight line
+    i.e. edges will have 0 angles for data_weight=0 i.e. straight line
+
+    the larger the values the sharper the edges
+    on data_weight=1 we will have 90 degree edges
+    """
+    smooth_path = deepcopy(path)
+    change = tolerance
+    while change >= tolerance:
+        change = 0
+        for row in range(1, len(path) - 1):
+            for col in range(len(path[0])):
+                # previous value and row movements
+                old_value = smooth_path[row][col]
+                n_row, p_row = row + 1, row - 1
+                # smoothing equations
+                a = path[row][col] - smooth_path[row][col]
+                b = smooth_path[n_row][col] + smooth_path[p_row][col] - 2. * smooth_path[row][col]
+                # apply smoothing and update change
+                smooth_path[row][col] += alpha * a + beta * b
+                change += smooth_path[row][col] - old_value
+    return smooth_path
 
 
-def smooth_constrained_cyclic(_path,
-                              weight_data=0.07,
-                              weight_smooth=0.1,
-                              tolerance=0.000001):
-    weight_constrained_smooth = 0.5 * weight_smooth
-    _new_path = deepcopy(_path)
-    _change = tolerance
-    # keep iterating until change is smaller than the tolerance
-    while _change >= tolerance:
-        # set change to 0
-        _change = 0.
-        """
-        loop over each path on (i,j) and apply gradient descent equations.
-        each time update the difference and store in change variable.
-        """
-        for row in range(len(_new_path)):
+def smooth_constrained_cyclic(path, alpha=0.07, beta=0.1, tolerance=0.000001):
+    from copy import deepcopy
+    gamma = 0.5 * beta
+    smooth_path = deepcopy(path)
+    change = tolerance
+    while change >= tolerance:
+        change = 0
+        for row in range(len(path)):
             if not fix_points[row]:
-                for col in range(len(_new_path[0])):
-                    # values before updates
-                    _old_value = _new_path[row][col]
-
-                    # gradient and descent equations
-                    _gradient = _path[row][col] - _new_path[row][col]
-                    _descent = _new_path[(row + 1) % len(_path)][col] + _new_path[(row - 1) % len(_path)][col]
-                    _descent -= 2. * _new_path[row][col]
-
-                    # constrained smoothing equations
-                    constrained_smooth_backward = 2. * (_new_path[(row - 1) % len(_path)][col])
-                    constrained_smooth_backward -= _new_path[(row - 2) % len(_path)][col]
-                    constrained_smooth_backward -= _new_path[row][col]
-
-                    constrained_smooth_forward = 2. * (_new_path[(row + 1) % len(_path)][col])
-                    constrained_smooth_forward -= _new_path[(row + 2) % len(_path)][col]
-                    constrained_smooth_forward -= _new_path[row][col]
-
-                    # save results of the equations
-                    _new_path[row][col] += weight_data * _gradient + weight_smooth * _descent
-                    _new_path[row][col] += weight_constrained_smooth * constrained_smooth_backward
-                    _new_path[row][col] += weight_constrained_smooth * constrained_smooth_forward
-
-        # compare the outcomes of the gradient and descent results
-        _change += abs(_new_path[row][col] - _old_value)
-    return _new_path
+                for col in range(len(path[0])):
+                    old_value = smooth_path[row][col]
+                    # rows movements
+                    n_row, p_row = (row + 1) % len(path), (row - 1) % len(path)
+                    nn_row, pp_row = (row + 1) % len(path), (row - 2) % len(path)
+                    # smoothing equations
+                    a = path[row][col] - smooth_path[row][col]
+                    b = smooth_path[n_row][col] + smooth_path[p_row][col] - 2 * smooth_path[row][col]
+                    c = 2 * (smooth_path[p_row][col]) - smooth_path[pp_row][col] - smooth_path[row][col]
+                    d = 2 * (smooth_path[n_row][col]) - smooth_path[nn_row][col] - smooth_path[row][col]
+                    # smoothing update
+                    smooth_path[row][col] += (alpha * a) + (beta * b) + (gamma * c) + (gamma * d)
+        change = abs(smooth_path[row][col] - old_value)
+    return smooth_path
 
 
-def p_controller(_robot, tau_p, n=20, speed=1.0):
-    _x_trajectory = []
-    _y_trajectory = []
-
-    for _index in range(n):
+def p_controller(robot, tau_p, n=20, speed=1.0):
+    # path tracing
+    x_path, y_path = [], []
+    for index in range(n):
+        # save coordinates
+        x_path.append(robot.x), y_path.append(robot.y)
+        # update cte
         cte = robot.y
-        # push current coordinates
-        _x_trajectory.append(_robot.x)
-        _y_trajectory.append(_robot.y)
-        # steering for proportional
-        steering = -tau_p * cte
-        _robot.move_simple(steering, speed)
-    return _x_trajectory, _y_trajectory
+        # calculate p equations and steering
+        p = -tau_p * cte
+        steering = p
+        # move robot
+        robot.move_simple(steering, speed)
+    return x_path, y_path
 
 
-def pd_controller(_robot, tau_p, tau_d, n=20, speed=1.0):
-    _x_trajectory = []
-    _y_trajectory = []
+def pd_controller(robot, tau_p, tau_d, n=20, speed=1.0):
+    # path tracing
+    x_path, y_path = [], []
+    # cross track errors
     cte = robot.y
-    for _index in range(n):
+    for index in range(n):
+        # save coordinates
+        x_path.append(robot.x), y_path.append(robot.y)
+        # update cte
         cte_old = cte
         cte = robot.y
-        # push current coordinates
-        _x_trajectory.append(_robot.x)
-        _y_trajectory.append(_robot.y)
-        # steering for proportional and differential
-        _proportional = -tau_p * cte
-        _differential = -tau_d * (cte - cte_old)
-        # combined steering
-        steering = _proportional + _differential
-        # move the robot
-        _robot.move_simple(steering, speed)
-    return _x_trajectory, _y_trajectory
+        # calculate pd equations and steering
+        p = -tau_p * cte
+        d = -tau_d * (cte - cte_old)
+        steering = p + d
+        # move robot
+        robot.move_simple(steering, speed)
+    return x_path, y_path
 
 
-def pid_controller(_robot, _radius, _params, n=100, _speed=1.0):
-    _tau_p = _params[0]
-    _tau_d = _params[1]
-    _tau_i = _params[2]
+def pid_controller(robot, radius, params, n=100, speed=1.0):
+    # pid params
+    tau_p, tau_d, tau_i = params[0], params[1], params[2]
+    # path tracing
+    x_path, y_path, error = [], [], 0
+    # cross track errors
+    cte, cte_old, cte_sum = robot.y, robot.y, 0
 
-    _x_trajectory = []
-    _y_trajectory = []
-
-    _error = 0
-    _cte = _robot.y
-    _cte_sum = 0
-
-    for _index in range(n * 2):
-        # previous value
-        _cte_old = _cte
-        # current value
-        _cte = robot.y
-        # sum of cte
-        _cte_sum += _cte
-        # push current coordinates
-        _x_trajectory.append(_robot.x)
-        _y_trajectory.append(_robot.y)
-        # accumulating all the error
-        # steering for pid
-        _proportional = -_tau_p * _cte
-        _differential = -_tau_d * (_cte - _cte_old)
-        _integral = -_tau_i * _cte_sum
-        _steering = _proportional + _differential + _integral
-        # save old value of the cte i.e. y before moving the robot
-        # move the robot with the steering and speed (how much distance)
-        _robot.move_simple(_steering, _speed)
-        if _index >= n:
-            _error += _cte ** 2
-    return _x_trajectory, _y_trajectory, _error / n
+    for index in range(2 * n):
+        # save coordinates
+        x_path.append(robot.x), y_path.append(robot.y)
+        # update cte
+        cte_old = cte
+        cte_sum += cte
+        cte = robot.y
+        # calculate pid equations and steering
+        p = -tau_p * cte
+        d = -tau_d * (cte - cte_old)
+        i = -tau_i * cte_sum
+        steering = p + i + d
+        # move robot
+        robot.move_simple(steering, speed)
+        # update error
+        error += cte ** 2 if index >= n else 0
+    return x_path, y_path, error / n
 
 
-def pid_controller_race_track(_robot, _radius, _params, n=100, _speed=1.0):
-    _tau_p = _params[0]
-    _tau_d = _params[1]
-    _tau_i = _params[2]
+def pid_controller_race_track(robot, radius, params, n=100, speed=1.0):
+    # pid params
+    x_path, y_path, error, = [], [], 0
+    # path tracing
+    tau_p, tau_d, tau_i = params[0], params[1], params[2]
+    # cross track errors
+    cte, cte_sum = robot.cte(radius), 0
 
-    _x_trajectory = []
-    _y_trajectory = []
-
-    _error = 0
-    _cte_old = _robot.cte(_radius)
-    _cte_sum = 0
-
-    for _index in range(n * 2):
-        _cte = _robot.cte(_radius)
-        # push current coordinates
-        _x_trajectory.append(_robot.x)
-        _y_trajectory.append(_robot.y)
-        # accumulating all the error
-        _cte_sum += _cte
-        # steering for pid
-        _proportional = -_tau_p * _cte
-        _differential = -_tau_d * (_cte - _cte_old)
-        _integral = -_tau_i * _cte_sum
-        _steering = _proportional + _differential + _integral
-        # save old value of the cte i.e. y before moving the robot
-        _cte_old = _cte
-        # move the robot with the steering and speed (how much distance)
-        _robot.move_simple(_steering, _speed)
-        if _index >= n:
-            _error += _cte ** 2
-    return _x_trajectory, _y_trajectory, _error / n
+    for index in range(2 * n):
+        # save coordinates
+        x_path.append(robot.x), y_path.append(robot.y)
+        # update cte
+        cte_old = cte
+        cte_sum += cte
+        cte = robot.cte(radius)
+        # calculate pid equations and steering
+        p = -tau_p * cte
+        d = -tau_d * (cte - cte_old)
+        i = -tau_i * cte_sum
+        steering = p + i + d
+        # move robot
+        robot.move_simple(steering, speed)
+        # update error
+        error += cte ** 2 if index >= n else 0
+    return x_path, y_path, error / n
 
 
 def twiddle(_controller=pid_controller, _radius=0., _tolerance=0.2):
