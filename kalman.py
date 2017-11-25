@@ -96,6 +96,8 @@ class KalmanFilter(object):
         """
         print('estimation (x): \n', estimate_matrix)  # x_pos, x_vel, y_pos, y_vel
         print('prediction (P): \n', uncertainty_covariance)  # uncertainties of x and y pos and vel
+        print('kalman gain(K): \n', kalman_gain) # kalman gain
+        print('system error(S): \n', system_error) # system error
         print()
         """
         kalman filter now has predicted:
@@ -114,7 +116,7 @@ R = np.matrix('1.')  # measurement noise
 I = np.matrix('1. 0. ; 0. 1.')  # identity matrix
 z = [1, 2, 3]  # measurements
 
-KalmanFilter.multi_variant__kalman_filter(x, P, u, F, H, R, I, z)
+# KalmanFilter.multi_variant__kalman_filter(x, P, u, F, H, R, I, z)
 
 # 4 dimensional space: x and y, x_dot and y_dot
 dt = 0.1

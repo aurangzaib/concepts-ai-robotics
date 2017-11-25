@@ -190,13 +190,15 @@ class Robot(object):
         # robot is in 1st region where x is less than radius.
         # we find the error using distance formula
         if self.x < radius:
-            cte = np.sqrt((self.x - radius) ** 2 + (self.y - radius) ** 2) - radius
+            cte += np.sqrt((self.x - radius) ** 2 + (self.y - radius) ** 2)
+            cte -= radius
         # case - 2:
         # when robot is outside of boundary i.e. outside of 3*radius
-        # we find the error using distance formula but taking care of
-        # shifting x. distance from y doesnt have any effect.
+        # we find the error using distance formula but taking care of shifting x
+        # distance from y doesnt have any effect.
         elif self.x > 3 * radius:
-            cte = np.sqrt((self.x - 3 * radius) ** 2 + (self.y - radius) ** 2) - radius
+            cte += np.sqrt((self.x - 3 * radius) ** 2 + (self.y - radius) ** 2)
+            cte -= radius
         # case - 3:
         # robot is in upper region from center (inside or outside of the boundary)
         # in this case, error is y - diameter
@@ -211,9 +213,9 @@ class Robot(object):
         # -ve --> within boundary and below center
         # +ve --> outside of the lower boundary
         else:
-            cte = 0 - self.y
+            cte -= self.y
         return cte
 
     def __repr__(self):
         # return '[x=%.5f y=%.5f orient=%.5f]'  % (self.x, self.y, self.orientation)
-        return '[%.5f, %.5f]' % (self.x, self.y)
+        return '[ {:.5f}, {:.5f} ]'.format(self.x, self.y)

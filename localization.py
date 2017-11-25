@@ -41,9 +41,13 @@ class Localization:
         q = [0 for col in range(len(p))]
         move_point = move_point % len(p)
         for _index in range(len(p)):
+            # jump from exact position
             q[move_point] += (p[_index]) * p_exact
+            # jump from next position
             q[move_point] += (p[(_index + 1) % len(p)]) * p_undershoot
+            # jump from previous position
             q[move_point] += (p[(_index - 1) % len(p)]) * p_overshoot
+            # exact + under + over
             move_point = (move_point + 1) % len(p)
         return q
 
@@ -86,12 +90,12 @@ class Localization:
     @staticmethod
     def sense(p, world_map, sensor_data, p_hit=0.9):
         """
-        we compare the sensor measurement value with the world values
-        if sensor measurement measurement
+        we compare the sensor measurement with the world values
         """
         q = [0 for col in range(len(p))]
         p_miss = 1. - p_hit
         for i in range(len(p)):
+            # if value in map is same as received by sensor
             hit_condition = world_map[i] is sensor_data
             q[i] = p[i] * p_hit if hit_condition else p[i] * p_miss
         normalizer = sum(q)
@@ -115,10 +119,9 @@ class Localization:
         for row in range(len(world_map)):
             for col in range(len(world_map[0])):
                 condition = world_map[row][col] is sensor_data
-                right = _p[row][col] * _sensor_right
-                wrong = _p[row][col] * _sensor_wrong
-
-                q[row][col] = right if condition else wrong
+                hit = _p[row][col] * _sensor_right
+                miss = _p[row][col] * _sensor_wrong
+                q[row][col] = hit if condition else miss
             normalize_factor += sum(q[row])
         """
         normalize the values so that
@@ -159,10 +162,8 @@ class Localization:
         p_init = 1.0 / float(len(_colors) * len(_colors[0]))
         q = [[p_init for col in range(len(_colors[0]))] for row in range(len(_colors))]
         for motion, measurement in zip(_motions, _measurements):
-            # predict
-            q = Localization.move_nxn(q, motion, _p_move)
-            # measure
-            q = Localization.sense_nxn(q, _colors, measurement, _s_right)
+            q = Localization.move_nxn(q, motion, _p_move) # predict
+            q = Localization.sense_nxn(q, _colors, measurement, _s_right) # measure
         for _q in q:
             print(_q)
         return q

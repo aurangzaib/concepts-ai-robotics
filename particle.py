@@ -33,15 +33,14 @@ def re_sample_wheel(iteration=1):
         sample_index = random.randint(0, number_of_samples)
         beta = 0
 
-        for _i in range(number_of_samples):
-            beta += random.random() * 2 * max(w)
+        for _ in range(number_of_samples):
+            beta += 2 * random.random() * max(w)
             while w[sample_index] < beta:
                 beta -= w[sample_index]
-                sample_index = (sample_index + 1) % number_of_samples
                 # '% number_of_samples' -> keeps the array reference from going out of bounds
+                sample_index = (sample_index + 1) % number_of_samples
             p3.append(p[sample_index])
     print("p3: ", p3)
 
 
 reverse_sort()
-# re_sample_wheel(2)

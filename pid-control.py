@@ -67,6 +67,10 @@ def smooth_constrained_cyclic(path, alpha=0.07, beta=0.1, tolerance=0.000001):
 
 
 def p_controller(robot, tau_p, n=20, speed=1.0):
+    """
+    system comes to mean position
+    but oscillations keep increasing
+    """
     # path tracing
     x_path, y_path = [], []
     for index in range(n):
@@ -83,6 +87,11 @@ def p_controller(robot, tau_p, n=20, speed=1.0):
 
 
 def pd_controller(robot, tau_p, tau_d, n=20, speed=1.0):
+    """
+    system comes to mean position
+    oscillation are damped
+    system bias (car drifted slowly to one end due to tilt in wheels) is there
+    """
     # path tracing
     x_path, y_path = [], []
     # cross track errors
@@ -103,6 +112,11 @@ def pd_controller(robot, tau_p, tau_d, n=20, speed=1.0):
 
 
 def pid_controller(robot, radius, params, n=100, speed=1.0):
+    """
+    system comes to mean position
+    oscillations are damped
+    system bias is removed
+    """
     # pid params
     tau_p, tau_d, tau_i = params[0], params[1], params[2]
     # path tracing
@@ -138,8 +152,6 @@ def pid_controller_race_track(robot, radius, params, n=100, speed=1.0):
     cte, cte_sum = robot.cte(radius), 0
 
     for index in range(2 * n):
-        # save coordinates
-        x_path.append(robot.x), y_path.append(robot.y)
         # update cte
         cte_old = cte
         cte_sum += cte
@@ -153,6 +165,8 @@ def pid_controller_race_track(robot, radius, params, n=100, speed=1.0):
         robot.move_simple(steering, speed)
         # update error
         error += cte ** 2 if index >= n else 0
+        # save coordinates
+        x_path.append(robot.x), y_path.append(robot.y)
     return x_path, y_path, error / n
 
 
@@ -162,9 +176,7 @@ def twiddle(_controller=pid_controller, _radius=0., _tolerance=0.2):
     _dp = [1. for row in range(_number_of_params)]
     """
     if we make _dp[2] = 0 i.e. we turn off the integral then the results will have drift again
-    same goes for _dp[1]
-
-    making _dp[any_one] = 0 tells to remove p, i or d
+    making _dp[any_one] = 0 removes p, i or d
     that's why we initialize _dp with 1,1,1 always
     """
     _robot = make_robot()
@@ -243,8 +255,8 @@ x_pd_drift, y_pd_drift = pd_controller(robot,
                                        number_of_steps)
 """
  - to reduce systematic bias like steering drift
- - we need to incorporate integral controller 
- - which subtracts systematic cte
+ - we need to incorporate integral controller
+ - which subtracts systematic bias from cte
  - and the value approaches to target without oscillating on the cte
 """
 params = [0.3, 3.0, 0.01]

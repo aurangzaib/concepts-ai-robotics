@@ -11,8 +11,11 @@ def move_overshoot(move_point, p, p_overshoot, p_undershoot, p_exact):
     q = [0 for col in range(len(p))]
     move_point = move_point % len(p)
     for index in range(len(p)):
+        # jump from exact position
         q[move_point] += p[index] * p_exact
+        # jump from next position
         q[move_point] += p[(index + 1) % len(p)] * p_undershoot
+        # jump from previous position
         q[move_point] += p[(index - 1) % len(p)] * p_overshoot
         move_point = (move_point + 1) % len(p)
     print("q overshoot: {}".format(q))
@@ -223,3 +226,40 @@ def pid_controller_track(robot, radius, params, n, speed=1.0):
         # update error
         error += cte ** 2 if index >= n else 0
     return x_path, y_path, error / n
+
+
+def resampling_wheel(p, w, n_samples):
+    import random
+    # get a random sample index
+    sample_index = random.randint(0,n_samples)
+    # init beta and new probabilities
+    beta = 0
+    p3 = []
+    for _ in range(n_samples):
+        beta += 2 * random.random() * max(w)
+        while w[sample_index] < beta:
+            beta -= w[sample_index]
+            sample_index = (sample_index + 1) % n_samples
+        p3.append(p[sample_index])
+    return p3
+ 
+def perform_rotation(image, cols, rows):
+    """
+    perform angular transformation
+    """
+    from random import randint
+    import cv2
+    center = (int(cols / 2), int(cols / 2))
+    angle = randint(-5, 5)
+    transformer = cv2.getRotationMatrix2D(center, angle, 1)
+    image = cv2.warpAffine(image, transformer, (cols, rows))
+    return image
+
+
+import cv2 as cv
+img = cv.imread("/Users/siddiqui/Downloads/checkboard.png");
+img = cv.resize(img, None, fx=.5, fy=.5, interpolation=cv.INTER_LINEAR)
+img = perform_rotation(img, 800, 800);
+cv.imwrite("/Users/siddiqui/Downloads/tangential.png", img)
+# cv.imshow("image", img);
+# cv.waitKey();
